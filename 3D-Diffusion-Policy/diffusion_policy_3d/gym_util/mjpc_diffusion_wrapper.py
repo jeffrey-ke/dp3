@@ -141,6 +141,37 @@ class MujocoPointcloudWrapperAdroit(gym.Wrapper):
     
     
 
+class MujocoVGGTAdroit(gym.Wrapper):
+    """
+    fetch images and give back a vggt point cloud.
+    """
+    def __init__(self, env, env_name:str, use_point_crop=True):
+        super().__init__(env)
+        self.env_name = env_name
+        # point cloud cropping
+        self.min_bound = ENV_POINT_CLOUD_CONFIG[env_name].get('min_bound', None)
+        self.max_bound = ENV_POINT_CLOUD_CONFIG[env_name].get('max_bound', None)
+        
+        self.use_point_crop = use_point_crop
+        cprint(f"[MujocoPointcloudWrapper] use_point_crop: {self.use_point_crop}", 'green')
+
+        
+        # point cloud sampling
+        self.num_points = ENV_POINT_CLOUD_CONFIG[env_name].get('num_points', 512)
+        self.point_sampling_method = ENV_POINT_CLOUD_CONFIG[env_name].get('point_sampling_method', 'uniform')
+        cprint(f"[MujocoPointcloudWrapper] sampling {self.num_points} points from point cloud using {self.point_sampling_method}", 'green')
+        assert self.point_sampling_method in ['uniform', 'fps'], \
+            f"point_sampling_method should be one of ['uniform', 'fps'], but got {self.point_sampling_method}"
+        
+        # point cloud generator
+        self.pc_generator = PointCloudGenerator(sim=env.get_mujoco_sim(),
+                                                cam_names=ENV_POINT_CLOUD_CONFIG[env_name]['cam_names'])
+        self.pc_transform = ENV_POINT_CLOUD_CONFIG[env_name].get('transform', None)
+        self.pc_scale = ENV_POINT_CLOUD_CONFIG[env_name].get('scale', None)
+        self.pc_offset = ENV_POINT_CLOUD_CONFIG[env_name].get('offset', None)
+    
+    
+
     def get_point_cloud(self, use_RGB=True):
         save_img_dir = None
         point_cloud, depth = self.pc_generator.generateCroppedPointCloud(save_img_dir=save_img_dir) # (N, 6), xyz+rgb
