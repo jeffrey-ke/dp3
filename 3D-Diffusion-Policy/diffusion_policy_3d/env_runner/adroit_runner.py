@@ -79,6 +79,7 @@ class AdroitRunner(BaseRunner):
             num_goal_achieved = 0
             actual_step_count = 0
             while not done:
+    fetch point cloud from mujoco and add it to obs
                 # create obs dict
                 np_obs_dict = dict(obs)
                 # device transfer
