@@ -35,7 +35,7 @@ class AdroitRunner(BaseRunner):
 
         def env_fn():
             return MultiStepWrapper(
-                SimpleVideoRecordingWrapper(
+                SimpleVideoRecordingWrapper( # duplicate the MujocoPointcloudWrapperAdroit
                     MujocoPointcloudWrapperAdroit(env=AdroitEnv(env_name=task_name, use_point_cloud=True),
                                                   env_name='adroit_'+task_name, use_point_crop=use_point_crop)),
                 n_obs_steps=n_obs_steps,
@@ -71,7 +71,8 @@ class AdroitRunner(BaseRunner):
                                      leave=False, mininterval=self.tqdm_interval_sec):
                 
             # start rollout
-            obs = env.reset()
+            obs = env.reset() # I would change the env to make sure the point cloud received is a 
+            # vggt point cloud
             policy.reset()
 
             done = False
@@ -90,7 +91,7 @@ class AdroitRunner(BaseRunner):
                     obs_dict_input = {}  # flush unused keys
                     obs_dict_input['point_cloud'] = obs_dict['point_cloud'].unsqueeze(0)
                     obs_dict_input['agent_pos'] = obs_dict['agent_pos'].unsqueeze(0)
-                    action_dict = policy.predict_action(obs_dict_input)
+                    action_dict = policy.predict_action(obs_dict_input) # REALLY important line
                     
 
                 # device_transfer
