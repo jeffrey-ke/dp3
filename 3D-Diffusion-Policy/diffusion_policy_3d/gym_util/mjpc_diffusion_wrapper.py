@@ -138,7 +138,53 @@ class MujocoPointcloudWrapperAdroit(gym.Wrapper):
         self.pc_transform = ENV_POINT_CLOUD_CONFIG[env_name].get('transform', None)
         self.pc_scale = ENV_POINT_CLOUD_CONFIG[env_name].get('scale', None)
         self.pc_offset = ENV_POINT_CLOUD_CONFIG[env_name].get('offset', None)
-    
+
+    def get_point_cloud(self, use_RGB=True):
+        save_img_dir = None
+        point_cloud, depth = self.pc_generator.generateCroppedPointCloud(save_img_dir=save_img_dir) # (N, 6), xyz+rgb
+        
+        
+        # do transform, scale, offset, and crop
+        if self.pc_transform is not None:
+            point_cloud[:, :3] = point_cloud[:, :3] @ self.pc_transform.T
+        if self.pc_scale is not None:
+            point_cloud[:, :3] = point_cloud[:, :3] * self.pc_scale
+        if self.pc_offset is not None:    
+            point_cloud[:, :3] = point_cloud[:, :3] + self.pc_offset
+
+        if self.use_point_crop:
+            if self.min_bound is not None:
+                mask = np.all(point_cloud[:, :3] > self.min_bound, axis=1)
+                point_cloud = point_cloud[mask]
+            if self.max_bound is not None:
+                mask = np.all(point_cloud[:, :3] < self.max_bound, axis=1)
+                point_cloud = point_cloud[mask]
+            
+        # sampling to fixed number of points
+        point_cloud = point_cloud_sampling(point_cloud=point_cloud, 
+                                           num_points=self.num_points, 
+                                           method=self.point_sampling_method)
+        
+        if not use_RGB:
+            point_cloud = point_cloud[:, :3]
+        return point_cloud, depth
+
+
+    def step(self, action):
+        obs_dict, reward, done, info = self.env.step(action)
+        point_cloud, depth = self.get_point_cloud()
+        
+        obs_dict['point_cloud'] = point_cloud
+        obs_dict['depth'] = depth
+        return obs_dict, reward, done, info
+
+    def reset(self):
+        obs_dict = self.env.reset()
+        point_cloud, depth = self.get_point_cloud()
+        obs_dict['point_cloud'] = point_cloud
+        obs_dict['depth'] = depth
+        return obs_dict
+
     
 
 class MujocoVGGTAdroit(gym.Wrapper):
