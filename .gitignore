@@ -47,3 +47,4 @@ output/*.gz
 *.zip
 __MACOSX
 mujoco210.tar.gz
+*.swp
