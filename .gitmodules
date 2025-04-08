@@ -1,0 +1,3 @@
+[submodule "3D-Diffusion-Policy/third_party/vggt"]
+	path = 3D-Diffusion-Policy/third_party/vggt
+	url = https://github.com/facebookresearch/vggt/
