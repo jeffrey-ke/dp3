@@ -101,7 +101,7 @@ training:
   device: "cuda:0"
   seed: 42
   debug: False
-  resume: True
+  resume: False
   lr_scheduler: cosine
   lr_warmup_steps: 500
   num_epochs: 3000
