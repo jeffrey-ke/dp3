@@ -1,5 +1,5 @@
 # Examples:
-# bash scripts/train_policy.sh dp3 adroit_hammer 0322 0 0
+# bash scripts/train_policy.sh (1)dp3 (2)adroit_hammer (3)0322 (4)0 (5)0
 # bash scripts/train_policy.sh dp3 dexart_laptop 0322 0 0
 # bash scripts/train_policy.sh simple_dp3 adroit_hammer 0322 0 0
 # bash scripts/train_policy.sh dp3 metaworld_basketball 0602 0 0
@@ -39,15 +39,27 @@ cd 3D-Diffusion-Policy
 
 export HYDRA_FULL_ERROR=1 
 export CUDA_VISIBLE_DEVICES=${gpu_id}
-python train.py --config-name=${config_name}.yaml \
-                            task=${task_name} \
-                            hydra.run.dir=${run_dir} \
-                            training.debug=$DEBUG \
-                            training.seed=${seed} \
-                            training.device="cuda:0" \
-                            exp_name=${exp_name} \
-                            logging.mode=${wandb_mode} \
-                            checkpoint.save_ckpt=${save_ckpt}
+if [ $DEBUG = True ]; then
+    pdb train.py --config-name=${config_name}.yaml \
+                                task=${task_name} \
+                                hydra.run.dir=${run_dir} \
+                                training.debug=$DEBUG \
+                                training.seed=${seed} \
+                                training.device="cuda:0" \
+                                exp_name=${exp_name} \
+                                logging.mode=${wandb_mode} \
+                                checkpoint.save_ckpt=${save_ckpt}
+else
+    python train.py --config-name=${config_name}.yaml \
+                                task=${task_name} \
+                                hydra.run.dir=${run_dir} \
+                                training.debug=$DEBUG \
+                                training.seed=${seed} \
+                                training.device="cuda:0" \
+                                exp_name=${exp_name} \
+                                logging.mode=${wandb_mode} \
+                                checkpoint.save_ckpt=${save_ckpt}
+fi 
 
 
 
