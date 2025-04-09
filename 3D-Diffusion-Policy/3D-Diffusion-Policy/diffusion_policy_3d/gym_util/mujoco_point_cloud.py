@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from PIL import Image as PIL_Image
 from typing import List
 import open3d as o3d
-
+from jutils.utils import pdb
 """
 Generates numpy rotation matrix from quaternion
 
@@ -205,7 +205,7 @@ class PointCloudGenerator(object):
         near = self.sim.model.vis.map.znear * extent
         far = self.sim.model.vis.map.zfar * extent
         image = near / (1 - depth * (1 - near / far))
-        return image
+        return np.ascontiguousarray(depth)
 
     def verticalFlip(self, img):
         return np.flip(img, axis=0)
