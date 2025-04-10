@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 from PIL import Image as PIL_Image
 from typing import List
 import open3d as o3d
+import torch
+from vggt.models.vggt import VGGT
+from vggt.utils.load_fn import preprocess_images
 
 """
 Generates numpy rotation matrix from quaternion
@@ -170,8 +173,8 @@ class PointCloudGenerator(object):
 
             # Compute world to camera transformation matrix
             cam_body_id = self.sim.model.cam_bodyid[cam_i]
-            cam_pos = self.sim.model.body_pos[cam_body_id]
-            c2b_r = rotMatList2NPRotMat(self.sim.model.cam_mat0[cam_i])
+            cam_pos = self.sim.model.body_pos[cam_body_id] # translation vector w.r.t world frame
+            c2b_r = rotMatList2NPRotMat(self.sim.model.cam_mat0[cam_i]) # converts [9] to [3,3]
             # In MuJoCo, we assume that a camera is specified in XML as a body
             #    with pose p, and that that body has a camera sub-element
             #    with pos and euler 0.
@@ -195,6 +198,7 @@ class PointCloudGenerator(object):
         combined_cloud_colors = color_img.reshape(-1, 3) # range [0, 255]
         combined_cloud = np.concatenate((combined_cloud_points, combined_cloud_colors), axis=1)
         depths = np.array(depths).squeeze()
+        import pdb; pdb.set_trace()
         return combined_cloud, depths
 
 
@@ -232,3 +236,115 @@ class PointCloudGenerator(object):
         normalized_image = normalized_image.astype(np.uint8)
         im = PIL_Image.fromarray(normalized_image)
         im.save(filepath + '/' + filename + ".jpg")
+
+
+
+
+class VGGTPointCloudGenerator(PointCloudGenerator):
+    """
+    initialization function
+
+    @param sim:       MuJoCo simulation object
+    @param min_bound: If not None, list len(3) containing smallest x, y, and z
+        values that will not be cropped
+    @param max_bound: If not None, list len(3) containing largest x, y, and z
+        values that will not be cropped
+    """
+    def __init__(self, sim, cam_names:List, img_size=84, device="cpu"):
+        super(PointCloudGenerator, self).__init__()
+
+        self.sim = sim
+        self.img_width = img_size
+        self.img_height = img_size
+        self.vggt_dtype = torch.bfloat16 if torch.cuda.get_device_capability()[0] >= 8 else torch.float16
+        self.vggt_device = device
+        
+        # self.vggt_model = VGGT().to(device)
+        # checkpoint_path = "/home/rajath/workspace/capstone/dp3/3D-Diffusion-Policy/test_vggt/checkpoints/model.pt"
+        # self.vggt_model.load_state_dict(torch.load(checkpoint_path, map_location=device))
+
+        self.vggt_model = VGGT()
+        _URL = "https://huggingface.co/facebook/VGGT-1B/resolve/main/model.pt"
+        self.vggt_model.load_state_dict(torch.hub.load_state_dict_from_url(_URL))
+        self.vggt_model.to(self.vggt_device)
+        self.vggt_model.eval()
+        
+        self.cam_names = cam_names
+        # List of camera intrinsic matrices
+        self.cam_mats = []
+        
+        for idx in range(len(self.cam_names)):
+            # get camera id
+            cam_id = self.sim.model.camera_name2id(self.cam_names[idx])
+            fovy = math.radians(self.sim.model.cam_fovy[cam_id])
+            f = self.img_height / (2 * math.tan(fovy / 2))
+            cam_mat = np.array(((f, 0, self.img_width / 2), (0, f, self.img_height / 2), (0, 0, 1)))
+            self.cam_mats.append(cam_mat)
+
+
+    def generateCroppedPointCloud(self, save_img_dir=None, device_id=0):
+        o3d_clouds = []
+        cam_poses = []
+        depths = []
+        imgs = []
+        
+        for cam_i in range(len(self.cam_names)):
+            color_img = self.captureImage(self.cam_names[cam_i], capture_depth=False, device_id=device_id)
+            imgs.append(color_img)
+            # depths.append(depth)
+            if save_img_dir != None:
+                # self.saveImg(depth, save_img_dir, "depth_test_" + str(cam_i))
+                self.saveImg(color_img, save_img_dir, "color_test_" + str(cam_i))
+            
+        images_tensor = preprocess_images(imgs) # (B, C, H, W)
+        with torch.no_grad():
+            with torch.amp.autocast(self.vggt_device, dtype=self.vggt_dtype):
+                images = images_tensor[None]  # add batch dimension
+                aggregated_tokens_list, ps_idx = self.vggt_model.aggregator(images)        
+                # Predict Point Maps
+                point_map, point_conf = self.vggt_model.point_head(aggregated_tokens_list, images, ps_idx)
+                depth_map, depth_conf = self.vggt_model.depth_head(aggregated_tokens_list, images, ps_idx)
+            
+        # Convert point map to numpy array and reshape
+        point_colors = images_tensor.squeeze().permute(1, 2, 0).contiguous().view(-1, 3) # (B, H, W, C)
+        point_map = point_map.squeeze().view(-1, 3) # (H*W, 3)
+        point_conf = point_conf.squeeze().view(-1) # (H*W,)
+        depth_map = depth_map.squeeze().view(-1) # (H*W,)
+        depth_conf = depth_conf.squeeze().view(-1) # (H*W,)
+
+        # Create masks based on confidence threshold
+        # TODO: change to arg-based threshold
+        # import pdb; pdb.set_trace()
+        mask = (point_conf > 2) & (depth_conf > 5)
+
+        # Reshape and concatenate
+        point_map = point_map[mask]
+        point_colors = point_colors[mask]
+        depth_map = depth_map[mask]
+        # Create open3d point cloud
+       
+        pcd = o3d.geometry.PointCloud()
+        pcd.points = o3d.utility.Vector3dVector(point_map.cpu().to(dtype=torch.float32).numpy())
+        
+        
+        # TODO: apply b2w_r = quat2Mat([0, 1, 0, 0]) to point_map, see above class!
+        # Transform point cloud from camera to world frame
+        # Get camera 0 transform since VGGT predicts w.r.t first camera
+        # cam_body_id = self.sim.model.cam_bodyid[0]
+        # cam_pos = self.sim.model.body_pos[cam_body_id]
+        # c2b_r = rotMatList2NPRotMat(self.sim.model.cam_mat0[0])
+        # b2w_r = quat2Mat([0, 1, 0, 0])  # 180 deg rotation about x-axis
+        # c2w_r = np.matmul(c2b_r, b2w_r)
+        # c2w = posRotMat2Mat(cam_pos, c2w_r)
+        # pcd.transform(c2w)
+
+        # get rgb colors
+        # print('range of point_colors', point_colors.min(), point_colors.max())
+        point_xyzrgb = torch.cat([point_map, point_colors], dim=-1)
+        point_xyzrgb = point_xyzrgb.cpu().numpy()
+        depth_map = depth_map.cpu().to(dtype=torch.float32).numpy()
+        # TODO: check for depth dependency in other classes
+        # import pdb; pdb.set_trace()
+        return point_xyzrgb, depth_map
+
+

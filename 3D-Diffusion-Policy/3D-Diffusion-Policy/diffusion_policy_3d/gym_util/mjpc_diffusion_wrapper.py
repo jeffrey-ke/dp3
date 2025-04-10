@@ -3,7 +3,7 @@ import numpy as np
 import pytorch3d.ops as torch3d_ops
 import torch
 from termcolor import cprint
-from diffusion_policy_3d.gym_util.mujoco_point_cloud import PointCloudGenerator
+from diffusion_policy_3d.gym_util.mujoco_point_cloud import PointCloudGenerator, VGGTPointCloudGenerator
 from typing import NamedTuple, Any
 from dm_env import StepType
 
@@ -133,7 +133,9 @@ class MujocoPointcloudWrapperAdroit(gym.Wrapper):
             f"point_sampling_method should be one of ['uniform', 'fps'], but got {self.point_sampling_method}"
         
         # point cloud generator
-        self.pc_generator = PointCloudGenerator(sim=env.get_mujoco_sim(),
+        # self.pc_generator = PointCloudGenerator(sim=env.get_mujoco_sim(),
+        #                                         cam_names=ENV_POINT_CLOUD_CONFIG[env_name]['cam_names'])
+        self.pc_generator = VGGTPointCloudGenerator(sim=env.get_mujoco_sim(),
                                                 cam_names=ENV_POINT_CLOUD_CONFIG[env_name]['cam_names'])
         self.pc_transform = ENV_POINT_CLOUD_CONFIG[env_name].get('transform', None)
         self.pc_scale = ENV_POINT_CLOUD_CONFIG[env_name].get('scale', None)
@@ -177,13 +179,13 @@ class MujocoPointcloudWrapperAdroit(gym.Wrapper):
         point_cloud, depth = self.get_point_cloud()
         
         obs_dict['point_cloud'] = point_cloud
-        obs_dict['depth'] = depth
+        # obs_dict['depth'] = depth
         return obs_dict, reward, done, info
 
     def reset(self):
         obs_dict = self.env.reset()
         point_cloud, depth = self.get_point_cloud()
         obs_dict['point_cloud'] = point_cloud
-        obs_dict['depth'] = depth
+        # obs_dict['depth'] = depth
         return obs_dict
 

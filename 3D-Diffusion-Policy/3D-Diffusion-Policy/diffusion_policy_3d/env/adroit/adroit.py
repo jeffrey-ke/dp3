@@ -313,12 +313,12 @@ class AdroitEnv:
                 shape=(number_channel, 84, 84),
                 dtype=np.float32
             ),
-            'depth': spaces.Box(
-                low=0,
-                high=1,
-                shape=(84, 84),
-                dtype=np.float32
-            ),
+            # 'depth': spaces.Box(
+            #     low=0,
+            #     high=1,
+            #     shape=(84, 84),
+            #     dtype=np.float32
+            # ),
             'agent_pos': spaces.Box(
                 low=-np.inf,
                 high=np.inf,

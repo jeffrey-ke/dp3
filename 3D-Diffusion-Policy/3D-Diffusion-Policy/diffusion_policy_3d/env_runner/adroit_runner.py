@@ -80,6 +80,7 @@ class AdroitRunner(BaseRunner):
             while not done:
                 # create obs dict
                 np_obs_dict = dict(obs)
+                # import pdb; pdb.set_trace()
                 # device transfer
                 obs_dict = dict_apply(np_obs_dict,
                                       lambda x: torch.from_numpy(x).to(

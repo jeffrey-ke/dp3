@@ -83,7 +83,10 @@ def stack_last_n_obs(all_obs, n_steps):
         result = np.zeros((n_steps,) + all_obs[-1].shape, 
             dtype=all_obs[-1].dtype)
         start_idx = -min(n_steps, len(all_obs))
-        result[start_idx:] = np.array(all_obs[start_idx:])
+        try:
+            result[start_idx:] = np.array(all_obs[start_idx:])
+        except:
+            import pdb; pdb.set_trace()
         if n_steps > len(all_obs):
             # pad
             result[:start_idx] = result[start_idx]
@@ -111,6 +114,7 @@ class MultiStepWrapper(gym.Wrapper):
         super().__init__(env)
         self._action_space = repeated_space(env.action_space, n_action_steps)
         self._observation_space = repeated_space(env.observation_space, n_obs_steps)
+        # import pdb; pdb.set_trace()
         self.max_episode_steps = max_episode_steps
         self.n_obs_steps = n_obs_steps
         self.n_action_steps = n_action_steps
