@@ -2,6 +2,11 @@
 # bash scripts/gen_demonstration_adroit.sh hammer
 # bash scripts/gen_demonstration_adroit.sh pen
 
+# build 3d diffusion policy to compile any changes made to the code
+cd 3D-Diffusion-Policy
+pip install -e .
+cd ../
+
 cd third_party/VRL3/src
 
 task=${1}

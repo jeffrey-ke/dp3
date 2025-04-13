@@ -3,6 +3,7 @@ import numpy as np
 import pytorch3d.ops as torch3d_ops
 import torch
 import os
+import time 
 
 from termcolor import cprint
 from diffusion_policy_3d.gym_util.mujoco_point_cloud import PointCloudGenerator, VGGTPointCloudGenerator
@@ -131,7 +132,7 @@ class MujocoPointcloudWrapperAdroit(gym.Wrapper):
         cprint(f"[MujocoPointcloudWrapper] sampling {self.num_points} points from point cloud using {self.point_sampling_method}", 'green')
         assert self.point_sampling_method in ['uniform', 'fps'], \
             f"point_sampling_method should be one of ['uniform', 'fps'], but got {self.point_sampling_method}"
-        
+        # import pdb; pdb.set_trace()
         # point cloud generator
         # self.pc_generator = PointCloudGenerator(sim=env.get_mujoco_sim(),
         #                                         cam_names=ENV_POINT_CLOUD_CONFIG[env_name]['cam_names'])
@@ -173,9 +174,12 @@ class MujocoPointcloudWrapperAdroit(gym.Wrapper):
 
         
         # sampling to fixed number of points
+        # start_time = time.time()
         point_cloud = point_cloud_sampling(point_cloud=point_cloud, 
                                            num_points=self.num_points, 
                                            method=self.point_sampling_method)
+        # end_time = time.time()
+        # cprint(f"[MujocoPointcloudWrapper] point cloud sampling time: {end_time - start_time} seconds", 'green')
         
         if not use_RGB:
             point_cloud = point_cloud[:, :3]

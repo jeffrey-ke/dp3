@@ -50,6 +50,7 @@ def main():
                         num_frames=frame_stack, env_feature_type='pixels',
                                             device='cuda', reward_rescale=True)
         env = MujocoPointcloudWrapperAdroit(env=env, env_name='adroit_'+args.env_name, use_point_crop=args.use_point_crop)
+        # import pdb; pdb.set_trace()
         return env
     num_episodes = args.num_episodes
     save_dir = os.path.join(args.root_dir, 'adroit_'+args.env_name+'_expert.zarr')
@@ -161,6 +162,7 @@ def main():
         img_arrays = np.transpose(img_arrays, (0,2,3,1))
     state_arrays = np.stack(state_arrays, axis=0)
     point_cloud_arrays = np.stack(point_cloud_arrays, axis=0)
+    # TODO: remove depth_arrays, somehow vggt doesn't output same depth array sizes!
     depth_arrays = np.stack(depth_arrays, axis=0)
     action_arrays = np.stack(action_arrays, axis=0)
     episode_ends_arrays = np.array(episode_ends_arrays)

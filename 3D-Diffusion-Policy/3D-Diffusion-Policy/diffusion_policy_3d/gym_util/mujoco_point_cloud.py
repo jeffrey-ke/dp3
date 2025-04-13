@@ -9,6 +9,7 @@ from PIL import Image as PIL_Image
 from typing import List
 import open3d as o3d
 import torch
+import time
 from vggt.models.vggt import VGGT
 from vggt.utils.load_fn import preprocess_images
 
@@ -300,10 +301,16 @@ class VGGTPointCloudGenerator(PointCloudGenerator):
         with torch.no_grad():
             with torch.amp.autocast(self.vggt_device, dtype=self.vggt_dtype):
                 images = images_tensor[None]  # add batch dimension
-                aggregated_tokens_list, ps_idx = self.vggt_model.aggregator(images)        
+                # start_time = time.time()
+                aggregated_tokens_list, ps_idx = self.vggt_model.aggregator(images)
+                # print(f"aggregator time: {time.time() - start_time} seconds")
                 # Predict Point Maps
+                # start_time = time.time()
                 point_map, point_conf = self.vggt_model.point_head(aggregated_tokens_list, images, ps_idx)
+                # print(f"point_head time: {time.time() - start_time} seconds")
+                # start_time = time.time()
                 depth_map, depth_conf = self.vggt_model.depth_head(aggregated_tokens_list, images, ps_idx)
+                # print(f"depth_head time: {time.time() - start_time} seconds")
             
         # Convert point map to numpy array and reshape
         point_colors = images_tensor.squeeze().permute(1, 2, 0).contiguous().view(-1, 3) # (B, H, W, C)
