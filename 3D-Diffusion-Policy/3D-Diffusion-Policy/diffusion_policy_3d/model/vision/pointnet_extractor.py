@@ -279,3 +279,6 @@ class DP3Encoder(nn.Module):
 
     def output_shape(self):
         return self.n_output_channels
+
+
+
