@@ -316,7 +316,7 @@ class VGGTPointCloudGenerator(PointCloudGenerator):
         point_colors = images_tensor.squeeze().permute(1, 2, 0).contiguous().view(-1, 3) # (B, H, W, C)
         point_map = point_map.squeeze().view(-1, 3) # (H*W, 3)
         point_conf = point_conf.squeeze().view(-1) # (H*W,)
-        depth_map = depth_map.squeeze().view(-1) # (H*W,)
+        depth_map = depth_map.squeeze() # (H, W)
         depth_conf = depth_conf.squeeze().view(-1) # (H*W,)
 
         # Create masks based on confidence threshold
@@ -327,7 +327,6 @@ class VGGTPointCloudGenerator(PointCloudGenerator):
         # Reshape and concatenate
         point_map = point_map[mask]
         point_colors = point_colors[mask]
-        depth_map = depth_map[mask]
         # Create open3d point cloud
        
         pcd = o3d.geometry.PointCloud()

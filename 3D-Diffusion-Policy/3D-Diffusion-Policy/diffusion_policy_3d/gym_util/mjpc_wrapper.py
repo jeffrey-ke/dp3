@@ -149,8 +149,9 @@ class MujocoPointcloudWrapperAdroit(gym.Wrapper):
         # set save_img_dir to save images for debugging
         # save_img_dir = "/home/yanjieze/projects/diffusion-for-dex/imgs"
         save_img_dir = None
+        # start_time = time.time()
         point_cloud, depth = self.pc_generator.generateCroppedPointCloud(save_img_dir=save_img_dir) # (N, 6), xyz+rgb
-        
+        # print(f"generateCroppedPointCloud time: {time.time() - start_time} seconds")
         
         
         # do transform, scale, offset, and crop
