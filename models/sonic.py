@@ -45,6 +45,22 @@ class SonicEncoder(nn.Module):
     #         bottlenecked = self.seq(features)
     #         return bottlenecked
 
+    class _ConvBottleneck(nn.Module):
+        def __init__(self, vggt_feature_size: torch.Size, dp3_encoder_dim):
+            super().__init__()
+            B, S, n_patches, patch_dim = vggt_feature_size
+            self.convs = nn.Sequential(nn.Conv2d(),#TODO
+                                        nn.BatchNorm2d(),
+                                        nn.ReLU(),
+                                        nn.Conv2d(),
+                                        nn.BatchNorm2d(),
+                                        nn.ReLU(),
+                                        nn.Conv2d(),
+                                        nn.BatchNorm2d(),
+                                        nn.ReLU(),
+                                        )
+            final_reshaped_dim = (S * 8) * (n_patches // 8) * (patch_dim // 8)
+            self.proj = nn.Linear(final_reshaped_dim, dp3_encoder_dim)
         def forward(self, features):
             # shape is B,S,P,2C
             # say the dimensions are something like
