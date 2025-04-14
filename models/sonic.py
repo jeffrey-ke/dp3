@@ -15,25 +15,24 @@ class SonicEncoder(nn.Module):
         def __init__(self, vggt_feature_size: torch.Size, dp3_encoder_dim):
             super().__init__()
             B, S, n_patches, patch_dim = vggt_feature_size
-            self.convs = nn.Sequential(nn.Conv2d(),#TODO
-                                        nn.BatchNorm2d(),
+            self.convs = nn.Sequential(nn.Conv2d(S, S, kernel_size=(4, 4), stride=(2,2), padding=1),#TODO
+                                        nn.BatchNorm2d(S),
                                         nn.ReLU(),
-                                        nn.Conv2d(),
-                                        nn.BatchNorm2d(),
+                                        nn.Conv2d(S, S, kernel_size=(4, 4), stride=(2,2), padding=1),
+                                        nn.BatchNorm2d(S),
                                         nn.ReLU(),
-                                        nn.Conv2d(),
-                                        nn.BatchNorm2d(),
+                                        nn.Conv2d(S, S, kernel_size=(4, 4), stride=(2,2), padding=1),
+                                        nn.BatchNorm2d(S),
                                         nn.ReLU(),
                                         )
-            final_reshaped_dim = (S * 8) * (n_patches // 8) * (patch_dim // 8)
+            final_reshaped_dim = (S * 1) * (n_patches // 8) * (patch_dim // 8)
             self.proj = nn.Linear(final_reshaped_dim, dp3_encoder_dim)
         def forward(self, features):
-            # shape is B,S,P,2C
-            # say the dimensions are something like
-            # 24, 64, 128
+            B, *_ = features.shape
             features = self.convs(features)
             reshaped = features.view(B, -1)
-            projected_featuers = self.proj(reshaped)
+            projected_features = self.proj(reshaped)
+            return projected_features
 
     def __init__(self,
                  dp3_encoder_dim,
@@ -53,41 +52,24 @@ class SonicEncoder(nn.Module):
                                                        nn.ReLU)
                                            )
         def get_vggt_feature_size():
-            if not vggt_feature_size:
+
+            if not SonicEncoder.vggt_feature_size:
                 rand_input = torch.randn(input_image_dimensions)
                 features, _ = self.vggt.aggregator(rand_input)
-                vggt_feature_size = features.shape
+                SonicEncoder.vggt_feature_size = features.shape
             return vggt_feature_size
+
         super().__init__()
         self.vggt = VGGT.from_pretrained(args.model).to("cuda") 
         self.vggt_feature_mode = args.vggt_feature_mode
         self.state_shape = observation_space['agent_pos']
         self.state_mlp = construct_state_mlp()
         self.args = args
-        """
-        Think about some rationale behind these bottleneck layers.
-        Sampling. Existing extractor is basically sampling. Can
-        we sample in the weird feature space in VGGT?
-        Why is the aggregator shape the way it is? That will inform
-        how we bottleneck.
-        """
-        # feature shape is B, S, P, 2C
-        # we need it to be one example, one feature ie (B,N)
         vggt_feature_size = get_vggt_feature_size()
-        if args.vggt_feature_mode:#TODO
-            # if args.bottleneck == "linear":
-            #     self.bottleneck = SimpleLinearBottlenneck()#TODO
-            # elif args.bottleneck == "mlp":
-            #     self.bottleneck = MlpBottleneck()
-            # elif args.bottleneck == "attn":
-            #     self.bottleneck = MHAttnBottleneck(num_heads=4, reduced_dim=dp3_encoder_dim)#TODO
-            if args.bottlenect == "conv":
-                self.bottleneck = SonicEncoder._ConvBottleneck(vggt_feature_size, dp3_encoder_dim) #TODO
-
-            if args.bottleneck_use_norm:
-                self.norm = nn.LayerNorm()
+        if args.vggt_feature_mode:
+            self.bottleneck = SonicEncoder._ConvBottleneck(vggt_feature_size, dp3_encoder_dim) 
         else:
-            self.extractor = PointNetEncoderXYZ(**pointcloud_encoder_cfg)#TODO
+            self.extractor = PointNetEncoderXYZ(**pointcloud_encoder_cfg)
 
     def forward(self, observations):
         robot_state = observations["agent_pos"]
