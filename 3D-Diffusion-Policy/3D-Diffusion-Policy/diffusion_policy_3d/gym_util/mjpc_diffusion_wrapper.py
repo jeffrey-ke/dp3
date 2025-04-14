@@ -167,12 +167,12 @@ class MujocoPointcloudWrapperAdroit(gym.Wrapper):
             
         # sampling to fixed number of points
         
-        start_time = time.time()
+        # start_time = time.time()
         point_cloud = point_cloud_sampling(point_cloud=point_cloud, 
                                            num_points=self.num_points, 
                                            method=self.point_sampling_method)
-        end_time = time.time()
-        print(f"point cloud sampling time: {end_time - start_time} seconds")
+        # end_time = time.time()
+        # print(f"point cloud sampling time: {end_time - start_time} seconds")
         
         if not use_RGB:
             point_cloud = point_cloud[:, :3]
