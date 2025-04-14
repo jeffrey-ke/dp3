@@ -10,40 +10,6 @@ Now, go line by line and mark todos
 """
 class SonicEncoder(nn.Module):
     vggt_feature_size = None
-    # class MHAttnBottleneck(nn.Module):
-    #     def __init__(self, num_heads, feature_size, dp3_encoder_dim):
-    #         super().__init__()
-    #         _, S, P, C = feature_size
-    #         self.mhattn = nn.MultiheadAttention(embed_dim=C, num_heads=num_heads)#TODO, because this is outdated
-    #         self.proj = nn.Linear(C, dp3_encoder_dim)
-
-    #     def forward(self, features):
-    #         B, *_ = features.shape
-    #         tokens = self.mhattn(features, features, features)
-    #         tokens_cated = tokens.view(B, -1)
-    #         projected_tokens = self.proj(tokens_cated)
-    #         return projected_tokens
-
-
-    # class SimpleLinearBottleneck(nn.Module):
-    #     def __init__(self, feature_size: torch.Size, dp3_encoder_dim):#TODO
-    #         _, S, P, C = feature_size
-    #         self.linear = nn.Linear(S * P * C, dp3_encoder_dim)#TODO
-
-    #     def forward(self, features):
-    #         # shape is B,S,P,2C
-    #         features_catd = features.view(B, S * P * C)#TODO
-    #         bottlenecked = self.linear(features_catd)
-    #         return bottlenecked
-
-    # class MlpBottleneck(nn.Module):
-    #     def __init__(self,):
-    #         self.seq = nn.Sequential(mlp)#TODO
-
-    #     def forward(self, features):
-    #         features_catd = features.view(B, S * P * C)#TODO
-    #         bottlenecked = self.seq(features)
-    #         return bottlenecked
 
     class _ConvBottleneck(nn.Module):
         def __init__(self, vggt_feature_size: torch.Size, dp3_encoder_dim):
