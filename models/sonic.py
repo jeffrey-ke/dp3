@@ -1,38 +1,89 @@
 import torch
 from torch import nn
-import vggt
-import PointNetEncoderXYZ
+from vggt.models.vggt import VGGT
+from diffusion_policy_3d.model.vision.pointnet_extractor import PointNetEncoderXYZ
 
 """
 Now, go line by line and mark todos
+
 """
 class SonicEncoder(nn.Module):
 
     class MHAttnBottleneck(nn.Module):
         init: num_heads #TODO
-            super().__init__()#TODO
+            super().__init__()
             self.mhattn = nn.MultiheadAttention(embed_dim = vggt_dim, num_heads=num_heada)
             self.proj = nn.Linear(vggt_dim, dp3_extractor_dim)
 
-        forward: self, X where X is B,S,vggt_dim#TODO
+        forward: self, X where X is (B, sequence_len, num_patches, 2 * patch_dim) #TODO
             tokens = self.mhattn(X, X, X)
             projected_tokens = self.proj(tokens)
             return projected_tokens
-    init:
-        super() stuff#TODO
-        self.vggt = VGGT()#TODO
+    # we will pass in pointcloud_encoder where DP3Encoder used to be declared
+    class SimpleLinearBottleneck(nn.Module):
+        def __init__(self, ):#TODO
+            self.linear = nn.Linear(S * P * C, dp3_encoder_dim)#TODO
+
+        def forward(self, features):
+            # shape is B,S,P,2C
+            features_catd = features.view(B, S * P * C)#TODO
+            bottlenecked = self.linear(features_catd)
+            return bottlenecked
+
+    class MlpBottleneck(nn.Module):
+        def __init__(self,):
+            self.seq = nn.Sequential(mlp)#TODO
+
+        def forward(self, features):
+            features_catd = features.view(B, S * P * C)#TODO
+            bottlenecked = self.seq(features)
+            return bottlenecked
+
+    class ConvBottleneck(nn.Module):
+        def __init__(self,):
+            stuff and dont forget about the super() stuff
+            
+        def forward(self, features):
+            # shape is B,S,P,2C
+            # say the dimensions are something like
+            # 24, 64, 128
+            conv2d, output spatial dim to be S * 2, P/2,C # 48, 32, 64
+            bn
+            relu
+            conv2d, output spatial dim to be S * 4,P/4,C/2 # 96, 16, 32
+            bn
+            relu
+            conv2d, output dims are S * 8, P/8, C/4 #96, 8, 16
+            bn
+            relu
+            reshape to B,-1
+            linear transform to dp3_encoder_dim
+            
+
+
+
+    def __init__(self, pointcloud_encoder_cfg=None, args=None):
+        super().__init__()
+        self.vggt = VGGT.from_pretrained(args.model).to("cuda") 
         self.vggt_feature_mode = args.vggt_feature_mode
-        pointcloud_encoder_cfg = get_cfgs()#TODO
-        if args.vggt_feature_mode:
+        """
+        Think about some rationale behind these bottleneck layers.
+        Sampling. Existing extractor is basically sampling. Can
+        we sample in the weird feature space in VGGT?
+        Why is the aggregator shape the way it is? That will inform
+        how we bottleneck.
+        """
+        # feature shape is B, S, P, 2C
+        # we need it to be one example, one feature ie (B,N)
+        if args.vggt_feature_mode:#TODO
             if args.bottleneck == "linear":
-                self.bottleneck = nn.Linear(vggt_dim, dp3_extractor_dim) 
+                self.bottleneck = SimpleLinearBottlenneck()#TODO
             elif args.bottleneck == "mlp":
-                self.bottleneck = nn.Sequential([nn.Linear(),
-                                                 nn.ReLU(),
-                                                 nn.Linear()]
-                                                )
+                self.bottleneck = MlpBottleneck()
             elif args.bottleneck == "attn":
-                self.bottleneck = MHAttnBottleneck(num_heads=4)
+                self.bottleneck = MHAttnBottleneck(num_heads=4, reduced_dim=dp3_extractor_dim)#TODO
+            elif args.bottlenect = "conv":
+                self.bottleneck = ConvBottleneck() #TODO
 
             if args.bottleneck_use_norm:
                 self.norm = nn.LayerNorm(dp3_extractor_dim)
