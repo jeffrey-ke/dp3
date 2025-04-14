@@ -65,25 +65,39 @@ class SonicEncoder(nn.Module):
             # shape is B,S,P,2C
             # say the dimensions are something like
             # 24, 64, 128
-            conv2d, output spatial dim to be S * 2, P/2,C # 48, 32, 64
-            bn
-            relu
-            conv2d, output spatial dim to be S * 4,P/4,C/2 # 96, 16, 32
-            bn
-            relu
-            conv2d, output dims are S * 8, P/8, C/4 #96, 8, 16
-            bn
-            relu
-            reshape to B,-1
-            linear transform to dp3_encoder_dim
-            
+            features = self.convs(features)
+            reshaped = features.view(B, -1)
+            projected_featuers = self.proj(reshaped)
 
+    def __init__(self,
+                 dp3_encoder_dim,
+                 observation_space,
+                 input_image_dimensions: torch.Size,
+                 state_mlp_size=(64,64),
+                 pointcloud_encoder_cfg=None,
+                 args=None):
 
-
-    def __init__(self, pointcloud_encoder_cfg=None, args=None):
+        def construct_state_mlp():
+            output_dim = state_mlp_size[-1]
+            net_arch = state_mlp_size[:-1]
+            #TODO might be an issue with the visibility and scope of self
+            self.state_mlp = nn.Sequential(*create_mlp(self.state_shape[0], 
+                                                       output_dim, 
+                                                       net_arch,
+                                                       nn.ReLU)
+                                           )
+        def get_vggt_feature_size():
+            if not vggt_feature_size:
+                rand_input = torch.randn(input_image_dimensions)
+                features, _ = self.vggt.aggregator(rand_input)
+                vggt_feature_size = features.shape
+            return vggt_feature_size
         super().__init__()
         self.vggt = VGGT.from_pretrained(args.model).to("cuda") 
         self.vggt_feature_mode = args.vggt_feature_mode
+        self.state_shape = observation_space['agent_pos']
+        self.state_mlp = construct_state_mlp()
+        self.args = args
         """
         Think about some rationale behind these bottleneck layers.
         Sampling. Existing extractor is basically sampling. Can
@@ -93,30 +107,31 @@ class SonicEncoder(nn.Module):
         """
         # feature shape is B, S, P, 2C
         # we need it to be one example, one feature ie (B,N)
+        vggt_feature_size = get_vggt_feature_size()
         if args.vggt_feature_mode:#TODO
-            if args.bottleneck == "linear":
-                self.bottleneck = SimpleLinearBottlenneck()#TODO
-            elif args.bottleneck == "mlp":
-                self.bottleneck = MlpBottleneck()
-            elif args.bottleneck == "attn":
-                self.bottleneck = MHAttnBottleneck(num_heads=4, reduced_dim=dp3_extractor_dim)#TODO
-            elif args.bottlenect = "conv":
-                self.bottleneck = ConvBottleneck() #TODO
+            # if args.bottleneck == "linear":
+            #     self.bottleneck = SimpleLinearBottlenneck()#TODO
+            # elif args.bottleneck == "mlp":
+            #     self.bottleneck = MlpBottleneck()
+            # elif args.bottleneck == "attn":
+            #     self.bottleneck = MHAttnBottleneck(num_heads=4, reduced_dim=dp3_encoder_dim)#TODO
+            if args.bottlenect == "conv":
+                self.bottleneck = SonicEncoder._ConvBottleneck(vggt_feature_size, dp3_encoder_dim) #TODO
 
             if args.bottleneck_use_norm:
-                self.norm = nn.LayerNorm(dp3_extractor_dim)
+                self.norm = nn.LayerNorm()
         else:
             self.extractor = PointNetEncoderXYZ(**pointcloud_encoder_cfg)#TODO
 
-    forward: observations#TODO
+    def forward(self, observations):
         robot_state = observations["agent_pos"]
         robot_state_features = self.state_mlp(robot_state)#TODO, actually implement this
         images = observations["image"]
         images = vggt_process(images)#TODO, actually implement this, because what format are the images in?
         features = self.vggt.aggregator(images)#TODO
-        if args.vggt_feature_mode:
+        if self.args.vggt_feature_mode:
             bottlenecked_features = self.bottleneck(features)
-            if args.bottleneck_use_norm:
+            if self.args.bottleneck_use_norm:
                 bottlenecked_features = self.norm(bottlenecked_features)
             cated_features = torch.cat([bottlenecked_features, robot_state_features], dim=-1)
             return cated_features
