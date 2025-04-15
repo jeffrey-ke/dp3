@@ -60,16 +60,13 @@ class SonicEncoder(nn.Module):
             return v
 
         super().__init__()
-        self.vggt = VGGT.from_pretrained(args.model).to("cuda") 
-        self.vggt_feature_mode = args.vggt_feature_mode
+        self.n_output_channels = dp3_encoder_dim
+        self.image_shape = observation_space['image']
         self.state_shape = observation_space['agent_pos']
+        self.vggt = load_vggt()
         self.state_mlp = construct_state_mlp()
-        self.args = args
         vggt_feature_size = get_vggt_feature_size()
-        if args.vggt_feature_mode:
-            self.bottleneck = SonicEncoder._ConvBottleneck(vggt_feature_size, dp3_encoder_dim) 
-        else:
-            self.extractor = PointNetEncoderXYZ(**pointcloud_encoder_cfg)
+        self.bottleneck = SonicEncoder._ConvBottleneck(vggt_feature_size, dp3_encoder_dim) 
 
     def forward(self, observations):
         robot_state = observations["agent_pos"]
