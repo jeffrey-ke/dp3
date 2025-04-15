@@ -33,10 +33,8 @@ class SonicEncoder(nn.Module):
     def __init__(self,
                  dp3_encoder_dim,
                  observation_space,
-                 input_image_dimensions: torch.Size,
                  state_mlp_size=(64,64),
-                 pointcloud_encoder_cfg=None,
-                 args=None):
+                 ):
 
         def construct_state_mlp():
             output_dim = state_mlp_size[-1]
