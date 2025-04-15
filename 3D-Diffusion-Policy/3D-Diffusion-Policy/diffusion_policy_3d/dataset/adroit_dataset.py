@@ -62,6 +62,7 @@ class AdroitDataset(BaseDataset):
             'action': self.replay_buffer['action'],
             'agent_pos': self.replay_buffer['state'][...,:],
             'point_cloud': self.replay_buffer['point_cloud'],
+            'img': self.replay_buffer['img'],
         }
         normalizer = LinearNormalizer()
         normalizer.fit(data=data, last_n_dims=1, mode=mode, **kwargs)
@@ -72,12 +73,14 @@ class AdroitDataset(BaseDataset):
 
     def _sample_to_data(self, sample):
         agent_pos = sample['state'][:,].astype(np.float32) # (agent_posx2, block_posex3)
+        # TODO: change batch data depending on the encoder being called!
         point_cloud = sample['point_cloud'][:,].astype(np.float32) # (T, 1024, 6)
-
+        img = sample['img'][:,].astype(np.float32)
         data = {
             'obs': {
                 'point_cloud': point_cloud, # T, 1024, 6
                 'agent_pos': agent_pos, # T, D_pos
+                'img': img # T , img_h ,img_w, 3
             },
             'action': sample['action'].astype(np.float32) # T, D_action
         }
@@ -86,6 +89,8 @@ class AdroitDataset(BaseDataset):
     def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
         sample = self.sampler.sample_sequence(idx)
         data = self._sample_to_data(sample)
+        # print(data.keys())
         torch_data = dict_apply(data, torch.from_numpy)
+        # print(torch_data.keys())
         return torch_data
 

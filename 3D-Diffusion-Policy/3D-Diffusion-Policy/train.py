@@ -112,6 +112,8 @@ class TrainDP3Workspace:
         if cfg.training.use_ema:
             self.ema_model.set_normalizer(normalizer)
 
+        
+
         # configure lr scheduler
         lr_scheduler = get_scheduler(
             cfg.training.lr_scheduler,

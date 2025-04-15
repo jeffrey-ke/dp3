@@ -1,9 +1,15 @@
 from typing import Dict
 import sys
 import os
-if not os.path.exists("/home/jeffk/repo/dp3"):
-    raise Exception("Change this path^")
-sys.path.append("/home/jeffk/repo/dp3")
+# if not os.path.exists("/home/jeffk/repo/dp3"):
+#     raise Exception("Change this path^")
+# sys.path.append("/home/jeffk/repo/dp3")
+
+dp3_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../../'))
+print(f'Loading dp3 from path {dp3_path}')
+if not os.path.exists(dp3_path):
+    raise Exception("dp3 path does not exist: " + dp3_path)
+sys.path.append(dp3_path)
 from models.sonic import SonicEncoder
 import math
 import torch
@@ -77,6 +83,7 @@ class DP3(BasePolicy):
                                observation_space=obs_dict)
         # create diffusion model
         obs_feature_dim = obs_encoder.output_shape()
+        # import pdb; pdb.set_trace()
         input_dim = action_dim + obs_feature_dim
         global_cond_dim = None
         if obs_as_global_cond:
@@ -311,6 +318,7 @@ class DP3(BasePolicy):
         # generate impainting mask
         condition_mask = self.mask_generator(trajectory.shape)
 
+        # import pdb; pdb.set_trace()
         # Sample noise that we'll add to the images
         noise = torch.randn(trajectory.shape, device=trajectory.device)
 
