@@ -1,4 +1,10 @@
 from typing import Dict
+import sys
+import os
+if not os.path.exists("/home/jeffk/repo/dp3"):
+    raise Exception("Change this path^")
+sys.path.append("/home/jeffk/repo/dp3")
+from models.sonic import SonicEncoder
 import math
 import torch
 import torch.nn as nn
