@@ -40,11 +40,12 @@ class SonicEncoder(nn.Module):
             output_dim = state_mlp_size[-1]
             net_arch = state_mlp_size[:-1]
             #TODO might be an issue with the visibility and scope of self
-            self.state_mlp = nn.Sequential(*create_mlp(self.state_shape[0], 
+            state_mlp = nn.Sequential(*create_mlp(self.state_shape[0], 
                                                        output_dim, 
                                                        net_arch,
                                                        nn.ReLU)
                                            )
+            return state_mlp
         def get_vggt_feature_size():
 
             if not SonicEncoder.vggt_feature_size:
