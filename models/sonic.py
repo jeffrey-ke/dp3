@@ -47,9 +47,8 @@ class SonicEncoder(nn.Module):
                                            )
             return state_mlp
         def get_vggt_feature_size():
-
             if not SonicEncoder.vggt_feature_size:
-                rand_input = torch.randn(input_image_dimensions)
+                rand_input = torch.randn(self.image_shape).to("cuda")
                 features, _ = self.vggt.aggregator(rand_input)
                 SonicEncoder.vggt_feature_size = features.shape
             return vggt_feature_size
