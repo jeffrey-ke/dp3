@@ -1,13 +1,9 @@
 import torch
+from jutils.utils import pdb
 from torch import nn
 from vggt.models.vggt import VGGT
 from diffusion_policy_3d.model.vision.pointnet_extractor import PointNetEncoderXYZ, create_mlp
-from utils import vggt_process
 
-"""
-Now, go line by line and mark todos
-
-"""
 class SonicEncoder(nn.Module):
     vggt_feature_size = None
 
@@ -15,7 +11,7 @@ class SonicEncoder(nn.Module):
         def __init__(self, vggt_feature_size: torch.Size, dp3_encoder_dim):
             super().__init__()
             B, S, n_patches, patch_dim = vggt_feature_size
-            self.convs = nn.Sequential(nn.Conv2d(S, S, kernel_size=(4, 4), stride=(2,2), padding=1),#TODO
+            self.convs = nn.Sequential(nn.Conv2d(S, S, kernel_size=(4, 4), stride=(2,2), padding=1),
                                         nn.BatchNorm2d(S),
                                         nn.ReLU(),
                                         nn.Conv2d(S, S, kernel_size=(4, 4), stride=(2,2), padding=1),
