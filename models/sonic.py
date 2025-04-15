@@ -51,7 +51,13 @@ class SonicEncoder(nn.Module):
                 rand_input = torch.randn(self.image_shape).to("cuda")
                 features, _ = self.vggt.aggregator(rand_input)
                 SonicEncoder.vggt_feature_size = features.shape
-            return vggt_feature_size
+            return SonicEncoder.vggt_feature_size
+        def load_vggt():
+            v = VGGT()
+            url = "https://huggingface.co/facebook/VGGT-1B/resolve/main/model.pt"
+            v.load_state_dict(torch.hub.load_state_dict_from_url(url))
+            v.to("cuda")
+            return v
 
         super().__init__()
         self.vggt = VGGT.from_pretrained(args.model).to("cuda") 
