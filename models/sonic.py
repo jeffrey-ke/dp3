@@ -73,7 +73,7 @@ class SonicEncoder(nn.Module):
 
     def forward(self, observations):
         robot_state = observations["agent_pos"]
-        robot_state_features = self.state_mlp(robot_state)#TODO, actually implement this
+        robot_state_features = self.state_mlp(robot_state)
         images = observations["image"]
         images = vggt_process(images)#TODO, actually implement this, because what format are the images in?
         features = self.vggt.aggregator(images)#TODO

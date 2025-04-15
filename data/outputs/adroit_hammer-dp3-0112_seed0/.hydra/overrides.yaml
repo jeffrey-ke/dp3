@@ -1,0 +1,7 @@
+- task=adroit_hammer
+- training.debug=True
+- training.seed=0
+- training.device=cuda:0
+- exp_name=adroit_hammer-dp3-0112
+- logging.mode=offline
+- checkpoint.save_ckpt=True
