@@ -50,7 +50,7 @@ class SonicEncoder(nn.Module):
             if not SonicEncoder.vggt_feature_size:
                 rand_input = torch.randn(self.image_shape).to("cuda")
                 features, _ = self.vggt.aggregator(rand_input)
-                SonicEncoder.vggt_feature_size = features.shape
+                SonicEncoder.vggt_feature_size = features[-1].shape
             return SonicEncoder.vggt_feature_size
         def load_vggt():
             v = VGGT()
@@ -71,10 +71,11 @@ class SonicEncoder(nn.Module):
     def forward(self, observations):
         robot_state = observations["agent_pos"]
         robot_state_features = self.state_mlp(robot_state)
-        images = observations["image"].permute(0, 3, 1, 2) # now, in shape B,C,H,W
         pdb()
-        features = self.vggt.aggregator(images)
-        bottlenecked_features = self.bottleneck(features)
+        images = observations["image"].permute(0, 3, 1, 2) # now, in shape B,C,H,W
+        features, _ = self.vggt.aggregator(images)
+        features_last = features[-1]
+        bottlenecked_features = self.bottleneck(features_last)
         cated_features = torch.cat([bottlenecked_features, robot_state_features], dim=-1)
         return cated_features
 
