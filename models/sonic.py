@@ -71,19 +71,12 @@ class SonicEncoder(nn.Module):
     def forward(self, observations):
         robot_state = observations["agent_pos"]
         robot_state_features = self.state_mlp(robot_state)
-        images = observations["image"]
-        images = vggt_process(images)#TODO, actually implement this, because what format are the images in?
-        features = self.vggt.aggregator(images)#TODO
-        if self.args.vggt_feature_mode:
-            bottlenecked_features = self.bottleneck(features)
-            if self.args.bottleneck_use_norm:
-                bottlenecked_features = self.norm(bottlenecked_features)
-            cated_features = torch.cat([bottlenecked_features, robot_state_features], dim=-1)
-            return cated_features
-        else: #using point clouds
-            pc = self.vggt.point_cloud_head(features)#TODO
-            pn_feat = self.extractor(pc)#TODO
-            cated_features = torch.cat([pn_feat, robot_state_features], dim=-1)
-            return cated_features
+        images = observations["image"].permute(0, 3, 1, 2) # now, in shape B,C,H,W
+        pdb()
+        features = self.vggt.aggregator(images)
+        bottlenecked_features = self.bottleneck(features)
+        cated_features = torch.cat([bottlenecked_features, robot_state_features], dim=-1)
+        return cated_features
 
-
+    def output_shape(self):
+        return self.n_output_channels
