@@ -175,7 +175,6 @@ class MujocoPointcloudWrapperAdroit(gym.Wrapper):
     def step(self, action):
         obs_dict, reward, done, info = self.env.step(action)
         point_cloud, depth = self.get_point_cloud()
-        
         obs_dict['point_cloud'] = point_cloud
         obs_dict['depth'] = depth
         return obs_dict, reward, done, info

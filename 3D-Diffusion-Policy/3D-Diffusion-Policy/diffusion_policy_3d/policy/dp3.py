@@ -1,4 +1,5 @@
 from typing import Dict
+from jutils.utils import pdb
 import sys
 import os
 if not os.path.exists("/home/jeffk/repo/dp3"):
@@ -93,7 +94,6 @@ class DP3(BasePolicy):
         cprint(f"[DiffusionUnetHybridPointcloudPolicy] pointnet_type: {self.pointnet_type}", "yellow")
 
 
-
         model = ConditionalUnet1D(
             input_dim=input_dim,
             local_cond_dim=None,
@@ -181,6 +181,7 @@ class DP3(BasePolicy):
         return trajectory
 
 
+    # where is this function called? I want to know how obs_dict is populated
     def predict_action(self, obs_dict: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
         """
         obs_dict: must include "obs" key

@@ -55,6 +55,7 @@ class LinearNormalizer(DictOfTensorMixin):
         if isinstance(x, dict):
             result = dict()
             for key, value in x.items():
+                # params_dict doesn't have `image`
                 params = self.params_dict[key]
                 result[key] = _normalize(value, params, forward=forward)
             return result

@@ -1,4 +1,5 @@
 import wandb
+from jutils.utils import pdb
 import numpy as np
 import torch
 import tqdm
@@ -89,6 +90,7 @@ class AdroitRunner(BaseRunner):
                 with torch.no_grad():
                     obs_dict_input = {}  # flush unused keys
                     obs_dict_input['point_cloud'] = obs_dict['point_cloud'].unsqueeze(0)
+                    obs_dict_input['image'] = obs_dict['image'].unsqueeze(0)
                     obs_dict_input['agent_pos'] = obs_dict['agent_pos'].unsqueeze(0)
                     action_dict = policy.predict_action(obs_dict_input)
                     
