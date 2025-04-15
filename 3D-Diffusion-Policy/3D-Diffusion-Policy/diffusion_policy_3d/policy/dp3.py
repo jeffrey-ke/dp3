@@ -64,16 +64,17 @@ class DP3(BasePolicy):
             
         obs_shape_meta = shape_meta['obs']
         obs_dict = dict_apply(obs_shape_meta, lambda x: x['shape'])
+        obs_dict['image'] = [1, 1, 3, 84, 84]
+        # obs_encoder = DP3Encoder(observation_space=obs_dict,
+        #                 img_crop_shape=crop_shape,
+        #                 out_channel=encoder_output_dim,
+        #                 pointcloud_encoder_cfg=pointcloud_encoder_cfg,
+        #                 use_pc_color=use_pc_color,
+        #                 pointnet_type=pointnet_type,
+        #                 )
 
-
-        obs_encoder = DP3Encoder(observation_space=obs_dict,
-                                                   img_crop_shape=crop_shape,
-                                                out_channel=encoder_output_dim,
-                                                pointcloud_encoder_cfg=pointcloud_encoder_cfg,
-                                                use_pc_color=use_pc_color,
-                                                pointnet_type=pointnet_type,
-                                                )
-
+        obs_encoder = SonicEncoder(dp3_encoder_dim=encoder_output_dim, 
+                               observation_space=obs_dict)
         # create diffusion model
         obs_feature_dim = obs_encoder.output_shape()
         input_dim = action_dim + obs_feature_dim
