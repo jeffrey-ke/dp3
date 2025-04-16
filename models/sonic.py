@@ -65,6 +65,7 @@ class SonicEncoder(nn.Module):
         self.state_shape = observation_space['agent_pos']
         self.vggt = load_vggt().half()
         self.state_mlp = construct_state_mlp()
+        self.state_feature_dim = state_mlp_size[-1]
         vggt_feature_size = get_vggt_feature_size()
         self.bottleneck = SonicEncoder._ConvBottleneck(vggt_feature_size, dp3_encoder_dim).half()
 
@@ -81,4 +82,4 @@ class SonicEncoder(nn.Module):
         return cated_features
 
     def output_shape(self):
-        return self.n_output_channels
+        return self.n_output_channels + self.state_feature_dim

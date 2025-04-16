@@ -283,12 +283,17 @@ class DP3(BasePolicy):
         cond_data = trajectory
         
        
-        
+        # what's the shape of batch['obs']
         if self.obs_as_global_cond:
             # reshape B, T, ... to B*T
             this_nobs = dict_apply(nobs, 
                 lambda x: x[:,:self.n_obs_steps,...].reshape(-1,*x.shape[2:]))
+            #this_nobs screws things up...
+            # it reshapes it to 64, 84, 84, 3
             nobs_features = self.obs_encoder(this_nobs)
+            # so, the output becomes 64, 128. 
+            # instead I should make the encoder have an outputdim that takes this into
+            # account
 
             if "cross_attention" in self.condition_type:
                 # treat as a sequence
@@ -296,6 +301,7 @@ class DP3(BasePolicy):
             else:
                 # reshape back to B, Do
                 global_cond = nobs_features.reshape(batch_size, -1)
+                # we get 
             # this_n_point_cloud = this_nobs['imagin_robot'].reshape(batch_size,-1, *this_nobs['imagin_robot'].shape[1:])
             this_n_point_cloud = this_nobs['point_cloud'].reshape(batch_size,-1, *this_nobs['point_cloud'].shape[1:])
             this_n_point_cloud = this_n_point_cloud[..., :3]
@@ -337,7 +343,6 @@ class DP3(BasePolicy):
         noisy_trajectory[condition_mask] = cond_data[condition_mask]
 
         # Predict the noise residual
-        
         pred = self.model(sample=noisy_trajectory, 
                         timestep=timesteps, 
                             local_cond=local_cond, 
