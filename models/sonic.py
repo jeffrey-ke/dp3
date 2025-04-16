@@ -7,6 +7,30 @@ from diffusion_policy_3d.model.vision.pointnet_extractor import PointNetEncoderX
 class SonicEncoder(nn.Module):
     vggt_feature_size = None
 
+    class _MLPBottleneck(nn.Module):
+        def __init__(self, vggt_feature_size, dp3_encoder_dim):
+            super().__init__()
+            B, S, n_patches, patch_dim = vggt_feature_size
+            feature_dim = S * n_patches * patch_dim
+            self.mlp = nn.Sequential(
+                    nn.Linear(feature_dim, 1024),
+                    nn.LayerNorm(1024),
+                    nn.ReLU(),
+                    nn.Linear(1024, 512),
+                    nn.LayerNorm(512),
+                    nn.ReLU(),
+                    nn.Linear(512, dp3_encoder_dim),
+                    nn.LayerNorm(dp3_encoder_dim),
+                    nn.ReLU(),
+                    )
+        def forward(self, features):
+            B, *_ = features.shape
+            features_cated = features.view(B, -1)
+            projed_features = self.mlp(features_cated)
+            return projed_features
+
+
+
     class _ConvBottleneck(nn.Module):
         def __init__(self, vggt_feature_size: torch.Size, dp3_encoder_dim):
             super().__init__()
@@ -67,14 +91,14 @@ class SonicEncoder(nn.Module):
         self.state_mlp = construct_state_mlp()
         self.state_feature_dim = state_mlp_size[-1]
         vggt_feature_size = get_vggt_feature_size()
-        self.bottleneck = SonicEncoder._ConvBottleneck(vggt_feature_size, dp3_encoder_dim).half()
+        self.bottleneck = SonicEncoder._MLPBottleneck(vggt_feature_size, self.n_output_channels).half()
 
     def forward(self, observations):
         robot_state = observations["agent_pos"]
         robot_state_features = self.state_mlp(robot_state)
         images = observations["image"].permute(0, 3, 1, 2) # now, in shape B,C,H,W
         images_with_sequence = images.unsqueeze(1).half()
-        pdb()
+        print(images_with_sequence.shape)
         features, _ = self.vggt.aggregator(images_with_sequence)
         features_last = features[-1]
         bottlenecked_features = self.bottleneck(features_last)
