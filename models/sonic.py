@@ -1,7 +1,18 @@
 import torch
-from jutils.utils import pdb
+# from jutils.utils import pdb
 from torch import nn
+import os 
+import sys 
+
+vggt_path = os.path.abspath('/home/san/dp3/vggt')
+print(f'Loading VGGT path from path {vggt_path}')
+if not os.path.exists(vggt_path):
+    raise Exception("dp3 path does not exist: " + vggt_path)
+sys.path.append(vggt_path)
+
 from vggt.models.vggt import VGGT
+
+import sys
 from diffusion_policy_3d.model.vision.pointnet_extractor import PointNetEncoderXYZ, create_mlp
 
 class SonicEncoder(nn.Module):
@@ -50,8 +61,10 @@ class SonicEncoder(nn.Module):
             if not SonicEncoder.vggt_feature_size:
                 rand_input = torch.randn(self.image_shape).to("cuda")
                 features, _ = self.vggt.aggregator(rand_input)
-                SonicEncoder.vggt_feature_size = features.shape
+                SonicEncoder.vggt_feature_size = features[0].shape
             return SonicEncoder.vggt_feature_size
+        
+
         def load_vggt():
             v = VGGT()
             url = "https://huggingface.co/facebook/VGGT-1B/resolve/main/model.pt"
@@ -67,15 +80,30 @@ class SonicEncoder(nn.Module):
         self.state_mlp = construct_state_mlp()
         vggt_feature_size = get_vggt_feature_size()
         self.bottleneck = SonicEncoder._ConvBottleneck(vggt_feature_size, dp3_encoder_dim) 
+        self.vggt_batchsize = 32 # TODO: needs to go into config!
+        self.vggt_dtype = torch.bfloat16 if torch.cuda.get_device_capability()[0] >= 8 else torch.float16
 
     def forward(self, observations):
-        robot_state = observations["agent_pos"]
+        robot_state = observations["agent_pos"] # B, 24
         robot_state_features = self.state_mlp(robot_state)
-        images = observations["image"].permute(0, 3, 1, 2) # now, in shape B,C,H,W
-        pdb()
-        features = self.vggt.aggregator(images)
+        images = observations["img"].permute(0, 3, 1, 2) # now, in shape B,C,H,W
+        images = images.unsqueeze(1) # VGGT expects B, N_views, C, H, W
+        
+        with torch.no_grad():
+            with torch.amp.autocast('cuda', dtype=self.vggt_dtype):
+                features = []
+                for i in range(0, images.shape[0], self.vggt_batchsize):
+                    minibatch = images[i:i+self.vggt_batchsize]
+                    # NOTE: vggt returns features from all 24 attention layers, only using last layers features here!
+                    features.append( self.vggt.aggregator(minibatch)[0][-1])
+        
+        # import pdb; pdb.set_trace()
+        features = torch.cat(features, dim=0) 
+
         bottlenecked_features = self.bottleneck(features)
+        print(f'cated features.shape : {bottlenecked_features.shape}')
         cated_features = torch.cat([bottlenecked_features, robot_state_features], dim=-1)
+        print(f'cated features.shape : {cated_features.shape}')
         return cated_features
 
     def output_shape(self):
