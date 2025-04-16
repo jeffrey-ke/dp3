@@ -99,7 +99,8 @@ class SonicEncoder(nn.Module):
         images = observations["image"].permute(0, 3, 1, 2) # now, in shape B,C,H,W
         images_with_sequence = images.unsqueeze(1).half()
         print(images_with_sequence.shape)
-        features, _ = self.vggt.aggregator(images_with_sequence)
+        with torch.no_grad():
+            features, _ = self.vggt.aggregator(images_with_sequence)
         features_last = features[-1]
         bottlenecked_features = self.bottleneck(features_last)
         cated_features = torch.cat([bottlenecked_features, robot_state_features], dim=-1)
