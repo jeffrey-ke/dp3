@@ -198,6 +198,10 @@ class TrainDP3Workspace:
                     
                     t1_2 = time.time()
 
+                    #clip gradients
+                    max_norm = 1.
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm)
+
                     # step optimizer
                     if self.global_step % cfg.training.gradient_accumulate_every == 0:
                         self.optimizer.step()
