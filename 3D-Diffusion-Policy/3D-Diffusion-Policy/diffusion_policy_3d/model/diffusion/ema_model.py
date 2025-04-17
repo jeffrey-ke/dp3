@@ -29,9 +29,10 @@ class EMAModel:
         """
 
         self.averaged_model = model
+        # import pdb; pdb.set_trace()
         self.averaged_model.eval()
         self.averaged_model.requires_grad_(False)
-
+        
         self.update_after_step = update_after_step
         self.inv_gamma = inv_gamma
         self.power = power

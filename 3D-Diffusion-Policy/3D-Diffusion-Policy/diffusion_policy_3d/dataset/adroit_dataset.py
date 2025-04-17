@@ -64,8 +64,14 @@ class AdroitDataset(BaseDataset):
             'point_cloud': self.replay_buffer['point_cloud'],
             'img': self.replay_buffer['img'],
         }
+        data_min = {
+            'img': 0,
+        }
+        data_max = {
+            'img': 1,
+        }
         normalizer = LinearNormalizer()
-        normalizer.fit(data=data, last_n_dims=1, mode=mode, **kwargs)
+        normalizer.fit(data=data, last_n_dims=1, mode=mode, data_min=data_min, data_max=data_max, **kwargs)
         return normalizer
 
     def __len__(self) -> int:

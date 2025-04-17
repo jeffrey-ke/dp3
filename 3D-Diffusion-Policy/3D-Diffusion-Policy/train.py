@@ -31,6 +31,7 @@ from diffusion_policy_3d.common.checkpoint_util import TopKCheckpointManager
 from diffusion_policy_3d.common.pytorch_util import dict_apply, optimizer_to
 from diffusion_policy_3d.model.diffusion.ema_model import EMAModel
 from diffusion_policy_3d.model.common.lr_scheduler import get_scheduler
+from diffusion_policy_3d.vis_utils.img_utils import save_test_images
 
 OmegaConf.register_new_resolver("eval", eval, replace=True)
 

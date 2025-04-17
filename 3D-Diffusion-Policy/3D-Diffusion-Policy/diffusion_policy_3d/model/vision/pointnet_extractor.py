@@ -229,10 +229,9 @@ class DP3Encoder(nn.Module):
             
         
         
-        cprint(f"[DP3Encoder] point cloud shape: {self.point_cloud_shape}", "yellow")
-        cprint(f"[DP3Encoder] state shape: {self.state_shape}", "yellow")
-        cprint(f"[DP3Encoder] imagination point shape: {self.imagination_shape}", "yellow")
-        
+        cprint(f"[{self.__class__.__name__}] point cloud shape: {self.point_cloud_shape}", "yellow")
+        cprint(f"[{self.__class__.__name__}] state shape: {self.state_shape}", "yellow")
+        cprint(f"[{self.__class__.__name__}] imagination point shape: {self.imagination_shape}", "yellow")
 
         self.use_pc_color = use_pc_color
         self.pointnet_type = pointnet_type
@@ -255,10 +254,12 @@ class DP3Encoder(nn.Module):
             net_arch = state_mlp_size[:-1]
         output_dim = state_mlp_size[-1]
 
+        cprint(f"[{self.__class__.__name__}] output dim: {self.n_output_channels}", "red")
+
         self.n_output_channels  += output_dim
         self.state_mlp = nn.Sequential(*create_mlp(self.state_shape[0], output_dim, net_arch, state_mlp_activation_fn))
 
-        cprint(f"[DP3Encoder] output dim: {self.n_output_channels}", "red")
+        cprint(f"[{self.__class__.__name__}] output dim: {self.n_output_channels}", "red")
 
 
     def forward(self, observations: Dict) -> torch.Tensor:

@@ -10,7 +10,7 @@ print(f'Loading dp3 from path {dp3_path}')
 if not os.path.exists(dp3_path):
     raise Exception("dp3 path does not exist: " + dp3_path)
 sys.path.append(dp3_path)
-from models.sonic import SonicEncoder
+# from models.sonic import SonicEncoder
 import math
 import torch
 import torch.nn as nn
@@ -29,6 +29,8 @@ from diffusion_policy_3d.model.diffusion.mask_generator import LowdimMaskGenerat
 from diffusion_policy_3d.common.pytorch_util import dict_apply
 from diffusion_policy_3d.common.model_util import print_params
 from diffusion_policy_3d.model.vision.pointnet_extractor import DP3Encoder
+from diffusion_policy_3d.model.vision.sonic import SonicEncoder
+from diffusion_policy_3d.vis_utils.img_utils import save_test_images
 
 class DP3(BasePolicy):
     def __init__(self, 
@@ -79,9 +81,17 @@ class DP3(BasePolicy):
         #                 pointnet_type=pointnet_type,
         #                 )
 
-        obs_encoder = SonicEncoder(dp3_encoder_dim=encoder_output_dim, 
-                               observation_space=obs_dict)
-        # create diffusion model
+        # obs_encoder = SonicEncoder(observation_space=obs_dict,
+        #                            img_crop_shape=crop_shape,
+        #                            out_channel=encoder_output_dim)
+        
+        obs_encoder = SonicEncoder(observation_space=obs_dict,
+                                   img_crop_shape=crop_shape,
+                                   out_channel=encoder_output_dim,
+                                   fusion_type="patch_pool")
+        
+        
+        # # create diffusion model
         obs_feature_dim = obs_encoder.output_shape()
         # import pdb; pdb.set_trace()
         input_dim = action_dim + obs_feature_dim
@@ -194,6 +204,8 @@ class DP3(BasePolicy):
         result: must include "action" key
         """
         # normalize input
+        # print(obs_dict)
+        # import pdb; pdb.set_trace()
         nobs = self.normalizer.normalize(obs_dict)
         # this_n_point_cloud = nobs['imagin_robot'][..., :3] # only use coordinate
         if not self.use_pc_color:
@@ -279,6 +291,10 @@ class DP3(BasePolicy):
         if not self.use_pc_color:
             nobs['point_cloud'] = nobs['point_cloud'][..., :3]
         
+        # import pdb; pdb.set_trace()
+        # from diffusion_policy_3d.vis_utils.img_utils import save_test_images
+        # save_test_images(nobs, save_dir='./test_images_train')
+                    
         batch_size = nactions.shape[0]
         horizon = nactions.shape[1]
 

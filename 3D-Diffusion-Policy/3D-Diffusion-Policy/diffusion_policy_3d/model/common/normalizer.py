@@ -18,18 +18,21 @@ class LinearNormalizer(DictOfTensorMixin):
         last_n_dims=1,
         dtype=torch.float32,
         mode='limits',
-        output_max=1.,
-        output_min=-1.,
+        output_max=1., # default for all fields
+        output_min=-1., # default for all fields
         range_eps=1e-4,
-        fit_offset=True):
+        fit_offset=True,
+        data_min: Union[Dict, torch.Tensor, np.ndarray, zarr.Array] = None,
+        data_max: Union[Dict, torch.Tensor, np.ndarray, zarr.Array] = None,
+        ):
         if isinstance(data, dict):
             for key, value in data.items():
                 self.params_dict[key] =  _fit(value, 
                     last_n_dims=last_n_dims,
                     dtype=dtype,
                     mode=mode,
-                    output_max=output_max,
-                    output_min=output_min,
+                    output_max=data_max[key] if key in data_max else output_max,
+                    output_min=data_min[key] if key in data_min else output_min,
                     range_eps=range_eps,
                     fit_offset=fit_offset)
         else:
