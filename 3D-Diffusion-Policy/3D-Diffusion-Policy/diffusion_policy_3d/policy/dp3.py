@@ -54,6 +54,7 @@ class DP3(BasePolicy):
             use_pc_color=False,
             pointnet_type="pointnet",
             pointcloud_encoder_cfg=None,
+            encoder_type="dp3",
             # parameters passed to step
             **kwargs):
         super().__init__()
@@ -73,19 +74,17 @@ class DP3(BasePolicy):
         obs_shape_meta = shape_meta['obs']
         obs_dict = dict_apply(obs_shape_meta, lambda x: x['shape'])
         obs_dict['image'] = [1, 1, 3, 84, 84]
-        # obs_encoder = DP3Encoder(observation_space=obs_dict,
-        #                 img_crop_shape=crop_shape,
-        #                 out_channel=encoder_output_dim,
-        #                 pointcloud_encoder_cfg=pointcloud_encoder_cfg,
-        #                 use_pc_color=use_pc_color,
-        #                 pointnet_type=pointnet_type,
-        #                 )
 
-        # obs_encoder = SonicEncoder(observation_space=obs_dict,
-        #                            img_crop_shape=crop_shape,
-        #                            out_channel=encoder_output_dim)
-        
-        obs_encoder = SonicEncoder(observation_space=obs_dict,
+        if encoder_type == "dp3":
+            obs_encoder = DP3Encoder(observation_space=obs_dict,
+                    img_crop_shape=crop_shape,
+                    out_channel=encoder_output_dim,
+                    pointcloud_encoder_cfg=pointcloud_encoder_cfg,
+                    use_pc_color=use_pc_color,
+                    pointnet_type=pointnet_type,
+                         )
+        elif encoder_type == "sonic":
+            obs_encoder = SonicEncoder(observation_space=obs_dict,
                                    img_crop_shape=crop_shape,
                                    out_channel=encoder_output_dim,
                                    fusion_type="patch_pool")
