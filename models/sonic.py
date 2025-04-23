@@ -72,9 +72,9 @@ class SonicEncoder(nn.Module):
             return state_mlp
         def get_vggt_feature_size():
             if not SonicEncoder.vggt_feature_size:
-                rand_input = torch.randn(self.image_shape).to("cuda").half()
+                rand_input = torch.randn(self.image_shape).to("cuda")
                 features, _ = self.vggt.aggregator(rand_input)
-                SonicEncoder.vggt_feature_size = features[-1].shape
+                SonicEncoder.vggt_feature_size = features[0].shape
             return SonicEncoder.vggt_feature_size
         def load_vggt():
             v = VGGT()
@@ -87,22 +87,33 @@ class SonicEncoder(nn.Module):
         self.n_output_channels = dp3_encoder_dim
         self.image_shape = observation_space['image']
         self.state_shape = observation_space['agent_pos']
-        self.vggt = load_vggt().half()
+        self.vggt = load_vggt()
         self.state_mlp = construct_state_mlp()
         self.state_feature_dim = state_mlp_size[-1]
         vggt_feature_size = get_vggt_feature_size()
-        self.bottleneck = SonicEncoder._MLPBottleneck(vggt_feature_size, self.n_output_channels).half()
+        self.bottleneck = SonicEncoder._ConvBottleneck(vggt_feature_size, dp3_encoder_dim) 
+        self.vggt_batchsize = 32 # TODO: needs to go into config!
+        self.vggt_dtype = torch.bfloat16 if torch.cuda.get_device_capability()[0] >= 8 else torch.float16
 
     def forward(self, observations):
         robot_state = observations["agent_pos"]
         robot_state_features = self.state_mlp(robot_state)
-        images = observations["image"].permute(0, 3, 1, 2) # now, in shape B,C,H,W
-        images_with_sequence = images.unsqueeze(1).half()
-        print(images_with_sequence.shape)
+        images = observations["image"]
+        if images.shape[-1] == 3:
+            images = images.permute(0, 3, 1, 2) # now, in shape B,C,H,W
+        images = images.unsqueeze(1) # VGGT expects B, N_views, C, H, W
         with torch.no_grad():
-            features, _ = self.vggt.aggregator(images_with_sequence)
-        features_last = features[-1]
-        bottlenecked_features = self.bottleneck(features_last)
+            with torch.amp.autocast('cuda', dtype=self.vggt_dtype):
+                features = []
+                for i in range(0, images.shape[0], self.vggt_batchsize):
+                    minibatch = images[i:i+self.vggt_batchsize]
+                    # NOTE: vggt returns features from all 24 attention layers, only using last layers features here!
+                    features.append( self.vggt.aggregator(minibatch)[0][-1])
+        
+        # import pdb; pdb.set_trace()
+        features = torch.cat(features, dim=0) 
+
+        bottlenecked_features = self.bottleneck(features)
         cated_features = torch.cat([bottlenecked_features, robot_state_features], dim=-1)
         return cated_features
 

@@ -31,7 +31,7 @@ class AdroitRunner(BaseRunner):
                  ):
         super().__init__(output_dir)
         self.task_name = task_name
-
+        pdb()
         steps_per_render = max(10 // fps, 1)
 
         def env_fn():

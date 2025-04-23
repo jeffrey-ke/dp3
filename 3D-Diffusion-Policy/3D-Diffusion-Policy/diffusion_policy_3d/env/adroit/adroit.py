@@ -17,6 +17,7 @@ from gym import spaces
 from mjrl.utils.gym_env import GymEnv
 from .rrl_local.rrl_multicam import BasicAdroitEnv, BasicFrankaEnv
 
+from jutils.utils import pdb
 
 class ExtendedTimeStep(NamedTuple):
     step_type: Any
@@ -232,6 +233,7 @@ class AdroitEnv:
                  use_point_cloud=False):
         if '-v0' not in env_name:  # compatibility with gym env name
             env_name += '-v0'
+        pdb()
         default_env_to_cam_list = {
             'hammer-v0': ['top'],
             'door-v0': ['top'],
