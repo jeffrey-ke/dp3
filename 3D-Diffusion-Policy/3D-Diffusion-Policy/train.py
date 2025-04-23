@@ -59,7 +59,6 @@ class TrainDP3Workspace:
             except: # minkowski engine could not be copied. recreate it
                 self.ema_model = hydra.utils.instantiate(cfg.policy)
 
-
         # configure training state
         self.optimizer = hydra.utils.instantiate(
             cfg.optimizer, params=self.model.parameters())
@@ -197,10 +196,6 @@ class TrainDP3Workspace:
                     loss.backward()
                     
                     t1_2 = time.time()
-
-                    #clip gradients
-                    max_norm = 1.
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm)
 
                     # step optimizer
                     if self.global_step % cfg.training.gradient_accumulate_every == 0:
