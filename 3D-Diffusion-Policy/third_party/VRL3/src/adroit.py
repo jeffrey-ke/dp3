@@ -46,6 +46,7 @@ class ExtendedTimeStepAdroit(NamedTuple):
     reward: Any
     discount: Any
     observation: Any
+    high_res_obs: Any
     observation_sensor: Any
     action: Any
     n_goal_achieved: Any
@@ -293,18 +294,21 @@ class AdroitEnv:
     def reset(self):
         # pixels and sensor values
         obs_pixels, obs_sensor = self._env.reset()
+        im_size = 168
+        high_res_image = self._env.sim.render(im_size, im_size, camera_name='top')
         obs_sensor = obs_sensor.astype(np.float32)
         action_spec = self.action_spec()
         action = np.zeros(action_spec.shape, dtype=action_spec.dtype)
 
         time_step = ExtendedTimeStepAdroit(observation=obs_pixels,
-                                     observation_sensor=obs_sensor,
-                                step_type=StepType.FIRST,
-                                action=action,
-                                reward=0.0,
-                                discount=1.0,
-                                n_goal_achieved=0,
-                                time_limit_reached=False)
+                                           high_res_obs=high_res_image,
+                                           observation_sensor=obs_sensor,
+                                           step_type=StepType.FIRST,
+                                           action=action,
+                                           reward=0.0,
+                                           discount=1.0,
+                                           n_goal_achieved=0,
+                                           time_limit_reached=False)
         return time_step
 
     def get_current_obs_without_reset(self):
@@ -329,6 +333,8 @@ class AdroitEnv:
 
     def step(self, action, force_step_type=None, debug=False):
         obs_all, reward, done, env_info = self._env.step(action)
+        im_size = 168
+        high_res_image = self._env.sim.render(im_size, im_size, camera_name='top')
         obs_pixels, obs_sensor = obs_all
         obs_sensor = obs_sensor.astype(np.float32)
 
@@ -354,6 +360,7 @@ class AdroitEnv:
         reward = reward * self.reward_rescale_factor
 
         time_step = ExtendedTimeStepAdroit(observation=obs_pixels,
+                                           high_res_obs=high_res_image,
                                      observation_sensor=obs_sensor,
                                 step_type=steptype,
                                 action=action,

@@ -90,6 +90,7 @@ class ExtendedTimeStepAdroit(NamedTuple):
     reward: Any
     discount: Any
     observation: Any
+    high_res_obs: Any
     observation_sensor: Any
     observation_pointcloud: Any
     observation_depth: Any
@@ -188,6 +189,7 @@ class MujocoPointcloudWrapperAdroit(gym.Wrapper):
         if 'adroit' in self.env_name: # adroit uses a namedtuple for obs
             # so we need to create a new namedtuple
             timestep = ExtendedTimeStepAdroit(step_type=timestep.step_type,
+                                         high_res_obs=timestep.high_res_obs,
                                          reward=timestep.reward,
                                          discount=timestep.discount,
                                          observation=timestep.observation,
@@ -209,6 +211,7 @@ class MujocoPointcloudWrapperAdroit(gym.Wrapper):
         if 'adroit' in self.env_name: # adroit uses a namedtuple for obs
             # so we need to create a new namedtuple
             timestep = ExtendedTimeStepAdroit(step_type=timestep.step_type,
+                                         high_res_obs=timestep.high_res_obs,
                                          reward=timestep.reward,
                                          discount=timestep.discount,
                                          observation=timestep.observation,
