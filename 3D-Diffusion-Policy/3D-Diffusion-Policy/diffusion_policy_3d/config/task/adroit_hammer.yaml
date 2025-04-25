@@ -2,13 +2,14 @@ name: adroit_hammer
 
 task_name: hammer
 
-image_shape: &image_shape [3, 84, 84]
+# image_shape: &image_shape [3, 84, 84]
+image_shape: &image_shape [3, 168, 168]
 shape_meta: &shape_meta
   # acceptable types: rgb, low_dim
   obs:
-    # image:
-    #     shape: *image_shape
-    #     type: rgb
+    image:
+        shape: *image_shape
+        type: rgb
     point_cloud:
       shape: [512, 3]
       type: point_cloud
@@ -26,7 +27,8 @@ env_runner:
   n_action_steps: ${n_action_steps}
   fps: 10
   task_name: hammer
-  render_size: 84
+  # render_size: 84 # NOTE: default DP3 setting
+  render_size: 168 # NOTE: for VGGT setting
   use_point_crop: ${policy.use_point_crop}
 
 dataset:

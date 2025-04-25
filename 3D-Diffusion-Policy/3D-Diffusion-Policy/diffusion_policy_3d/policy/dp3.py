@@ -72,22 +72,36 @@ class DP3(BasePolicy):
             raise NotImplementedError(f"Unsupported action shape {action_shape}")
             
         obs_shape_meta = shape_meta['obs']
+        # import pdb; pdb.set_trace()
         obs_dict = dict_apply(obs_shape_meta, lambda x: x['shape'])
-        obs_dict['image'] = [1, 1, 3, 84, 84]
+        # obs_dict['image'] = [1, 1, 3, 84, 84]
 
-        if encoder_type == "dp3":
-            obs_encoder = DP3Encoder(observation_space=obs_dict,
-                    img_crop_shape=crop_shape,
-                    out_channel=encoder_output_dim,
-                    pointcloud_encoder_cfg=pointcloud_encoder_cfg,
-                    use_pc_color=use_pc_color,
-                    pointnet_type=pointnet_type,
-                         )
-        elif encoder_type == "sonic":
-            obs_encoder = SonicEncoder(observation_space=obs_dict,
+        # obs_encoder = DP3Encoder(observation_space=obs_dict,
+        #             img_crop_shape=crop_shape,
+        #             out_channel=encoder_output_dim,
+        #             pointcloud_encoder_cfg=pointcloud_encoder_cfg,
+        #             use_pc_color=use_pc_color,
+        #             pointnet_type=pointnet_type,
+        #                  )
+
+        obs_encoder = SonicEncoder(observation_space=obs_dict,
                                    img_crop_shape=crop_shape,
                                    out_channel=encoder_output_dim,
                                    fusion_type="patch_pool")
+
+        # if encoder_type == "dp3":
+        #     obs_encoder = DP3Encoder(observation_space=obs_dict,
+        #             img_crop_shape=crop_shape,
+        #             out_channel=encoder_output_dim,
+        #             pointcloud_encoder_cfg=pointcloud_encoder_cfg,
+        #             use_pc_color=use_pc_color,
+        #             pointnet_type=pointnet_type,
+        #                  )
+        # elif encoder_type == "sonic":
+        #     obs_encoder = SonicEncoder(observation_space=obs_dict,
+        #                            img_crop_shape=crop_shape,
+        #                            out_channel=encoder_output_dim,
+        #                            fusion_type="patch_pool")
         
         
         # # create diffusion model
@@ -229,6 +243,7 @@ class DP3(BasePolicy):
         if self.obs_as_global_cond:
             # condition through global feature
             this_nobs = dict_apply(nobs, lambda x: x[:,:To,...].reshape(-1,*x.shape[2:]))
+            # print('predict action : this_nobs[img].shape', this_nobs['img'].shape)
             nobs_features = self.obs_encoder(this_nobs)
             if "cross_attention" in self.condition_type:
                 # treat as a sequence
@@ -309,6 +324,7 @@ class DP3(BasePolicy):
             # reshape B, T, ... to B*T
             this_nobs = dict_apply(nobs, 
                 lambda x: x[:,:self.n_obs_steps,...].reshape(-1,*x.shape[2:]))
+            # print('compute loss : this_nobs[img].shape', this_nobs['img'].shape)
             nobs_features = self.obs_encoder(this_nobs)
 
             if "cross_attention" in self.condition_type:

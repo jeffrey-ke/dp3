@@ -16,7 +16,7 @@ from collections import OrderedDict
 from gym import spaces
 from mjrl.utils.gym_env import GymEnv
 from .rrl_local.rrl_multicam import BasicAdroitEnv, BasicFrankaEnv
-
+from termcolor import cprint
 
 class ExtendedTimeStep(NamedTuple):
     step_type: Any
@@ -229,7 +229,7 @@ class AdroitEnv:
     # a wrapper class that will make Adroit env looks like a dmc env
     def __init__(self, env_name, test_image=False, cam_list=None,
                  num_repeats=2, num_frames=1, env_feature_type='pixels', device='cuda', reward_rescale=True,
-                 use_point_cloud=False):
+                 use_point_cloud=False, render_size=84):
         if '-v0' not in env_name:  # compatibility with gym env name
             env_name += '-v0'
         default_env_to_cam_list = {
@@ -242,6 +242,8 @@ class AdroitEnv:
         if cam_list is None:
             cam_list = default_env_to_cam_list[env_name]
         self.env_name = env_name
+        self.height = render_size
+        self.width = render_size
         reward_rescale_dict = {
             'hammer-v0': 1/100,
             'door-v0': 1/20,
@@ -269,8 +271,10 @@ class AdroitEnv:
                                  device=device
                                  )
         elif env_feature_type == 'pixels':
-            height = 84
-            width = 84
+            # height = 84
+            # width = 84
+            height = self.height
+            width = self.width
             latent_dim = height*width*len(cam_list)*num_frames
             # RRL class instance is environment wrapper...
             env = BasicAdroitEnv(env, cameras=cam_list,
@@ -287,8 +291,10 @@ class AdroitEnv:
         number_channel = len(cam_list) * 3 * num_frames
 
         if env_feature_type == 'pixels':
+            # self._obs_spec = specs.BoundedArray(shape=(
+            #     number_channel, 84, 84), dtype='uint8', name='observation', minimum=0, maximum=255)
             self._obs_spec = specs.BoundedArray(shape=(
-                number_channel, 84, 84), dtype='uint8', name='observation', minimum=0, maximum=255)
+                number_channel, self.height, self.width), dtype='uint8', name='observation', minimum=0, maximum=255)
             self._obs_sensor_spec = specs.Array(
                 shape=(self.obs_sensor_dim,), dtype='float32', name='observation_sensor')
         elif env_feature_type == 'resnet18' or env_feature_type == 'resnet34':
@@ -307,16 +313,28 @@ class AdroitEnv:
             dtype=np.float64
         )
         self.observation_space = spaces.Dict({
+            # 'image': spaces.Box(
+            #     low=0,
+            #     high=1,
+            #     shape=(number_channel, 84, 84),
+            #     dtype=np.float32
+            # ),
+            # 'depth': spaces.Box(
+            #     low=0,
+            #     high=1,
+            #     shape=(84, 84),
+            #     dtype=np.float32
+            # ),
             'image': spaces.Box(
                 low=0,
                 high=1,
-                shape=(number_channel, 84, 84),
+                shape=(number_channel, self.height, self.width),
                 dtype=np.float32
             ),
             'depth': spaces.Box(
                 low=0,
                 high=1,
-                shape=(84, 84),
+                shape=(self.height, self.width),
                 dtype=np.float32
             ),
             'agent_pos': spaces.Box(
@@ -418,7 +436,7 @@ class AdroitEnv:
 
     def render(self, mode):
         assert mode == 'rgb_array'
-        img = self.get_pixels_with_width_height(84, 84)
+        img = self.get_pixels_with_width_height(self.height, self.width)
         # make it channel last
         img = np.transpose(img, (1, 2, 0))  # it has been 0-255
         # (84, 84, 3), uint8, 0-255

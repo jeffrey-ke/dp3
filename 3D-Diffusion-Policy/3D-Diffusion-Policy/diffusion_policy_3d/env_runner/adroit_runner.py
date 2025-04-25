@@ -36,8 +36,8 @@ class AdroitRunner(BaseRunner):
         def env_fn():
             return MultiStepWrapper(
                 SimpleVideoRecordingWrapper(
-                    MujocoPointcloudWrapperAdroit(env=AdroitEnv(env_name=task_name, use_point_cloud=True),
-                                                  env_name='adroit_'+task_name, use_point_crop=use_point_crop)),
+                    MujocoPointcloudWrapperAdroit(env=AdroitEnv(env_name=task_name, use_point_cloud=True, render_size=render_size),
+                                                  env_name='adroit_'+task_name, use_point_crop=use_point_crop,)),
                 n_obs_steps=n_obs_steps,
                 n_action_steps=n_action_steps,
                 max_episode_steps=max_steps,
@@ -92,6 +92,7 @@ class AdroitRunner(BaseRunner):
                     obs_dict_input['agent_pos'] = obs_dict['agent_pos'].unsqueeze(0)
                     # obs_dict_input['image'] = obs_dict['image'].unsqueeze(0)
                     obs_dict_input['img'] = obs_dict['image'].unsqueeze(0)
+                    # print('obs_dict_input[img].shape in env runner', obs_dict_input['img'].shape)
                     action_dict = policy.predict_action(obs_dict_input)
                     
 

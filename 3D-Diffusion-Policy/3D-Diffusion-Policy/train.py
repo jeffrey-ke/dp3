@@ -190,6 +190,7 @@ class TrainDP3Workspace:
                     t1 = time.time()
                     # device transfer
                     batch = dict_apply(batch, lambda x: x.to(device, non_blocking=True))
+                    # print( 'train_batch[obs][img].shape', batch['obs']['img'].shape)
                     if train_sampling_batch is None:
                         train_sampling_batch = batch
                 
@@ -273,6 +274,7 @@ class TrainDP3Workspace:
                             leave=False, mininterval=cfg.training.tqdm_interval_sec) as tepoch:
                         for batch_idx, batch in enumerate(tepoch):
                             batch = dict_apply(batch, lambda x: x.to(device, non_blocking=True))
+                            # print( 'val_batch[obs][img].shape', batch['obs']['img'].shape)
                             loss, loss_dict = self.model.compute_loss(batch)
                             val_losses.append(loss)
                             if (cfg.training.max_val_steps is not None) \
@@ -290,7 +292,7 @@ class TrainDP3Workspace:
                     batch = dict_apply(train_sampling_batch, lambda x: x.to(device, non_blocking=True))
                     obs_dict = batch['obs']
                     gt_action = batch['action']
-                    
+                    # print( 'diffusion sampling train_batch[obs][img].shape', batch['obs']['img'].shape)
                     result = policy.predict_action(obs_dict)
                     pred_action = result['action_pred']
                     mse = torch.nn.functional.mse_loss(pred_action, gt_action)
