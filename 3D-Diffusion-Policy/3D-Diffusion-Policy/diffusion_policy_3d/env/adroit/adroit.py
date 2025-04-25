@@ -338,12 +338,13 @@ class AdroitEnv:
     def reset(self):
         # pixels and sensor values
         obs_pixels, obs_sensor = self._env.reset()
+        high_res = self.get_high_res()
         obs_sensor = obs_sensor.astype(np.float32)
         action_spec = self.action_spec()
         action = np.zeros(action_spec.shape, dtype=action_spec.dtype)
 
         obs_dict = {
-            'image': obs_pixels,
+            'image': high_res,
             'agent_pos': obs_sensor
         }
         return obs_dict
@@ -368,10 +369,13 @@ class AdroitEnv:
     def get_pixels_with_width_height(self, w, h):
         return self._env.get_pixels_with_width_height(w, h)
 
+    def get_high_res(self, im_size=168):
+        return self._env.sim.render(im_size, im_size, camera_name='top')
+
     def step(self, action, force_step_type=None, debug=False):
 
         obs_all, reward, done, env_info = self._env.step(action)
-
+        high_res = self.get_high_res()
         obs_pixels, obs_sensor = obs_all
         obs_sensor = obs_sensor.astype(np.float32)
 
