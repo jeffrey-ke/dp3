@@ -2,6 +2,7 @@
 # bash scripts/gen_demonstration_adroit.sh hammer
 # bash scripts/gen_demonstration_adroit.sh pen
 
+home=$(pwd)
 cd third_party/VRL3/src
 
 task=${1}
@@ -13,3 +14,4 @@ CUDA_VISIBLE_DEVICES=0 python gen_demonstration_expert_custom_res.py --env_name 
                         --img_size 84 \
                         --not_use_multi_view \
                         --use_point_crop
+cd $home

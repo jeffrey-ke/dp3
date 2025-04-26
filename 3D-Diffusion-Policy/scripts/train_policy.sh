@@ -34,6 +34,7 @@ else
     echo -e "\033[33mTrain mode\033[0m"
 fi
 
+home=$(pwd)
 cd 3D-Diffusion-Policy
 
 
@@ -60,7 +61,4 @@ else
                                 logging.mode=${wandb_mode} \
                                 checkpoint.save_ckpt=${save_ckpt}
 fi 
-
-
-
-                                
+cd $home
