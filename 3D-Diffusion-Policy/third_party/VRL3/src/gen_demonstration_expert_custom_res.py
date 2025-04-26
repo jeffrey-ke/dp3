@@ -17,6 +17,8 @@ from copy import deepcopy
 import numpy as np
 
 from diffusion_policy_3d.gym_util.mjpc_wrapper import MujocoPointcloudWrapperAdroit
+from diffusion_policy_3d.model.vision.sonic import load_vggt
+from torchvision.transforms import ToTensor
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -195,10 +197,31 @@ def main():
     cprint(f'depth shape: {depth_arrays.shape}, range: [{np.min(depth_arrays)}, {np.max(depth_arrays)}]', 'green')
     cprint(f'state shape: {state_arrays.shape}, range: [{np.min(state_arrays)}, {np.max(state_arrays)}]', 'green')
     cprint(f'action shape: {action_arrays.shape}, range: [{np.min(action_arrays)}, {np.max(action_arrays)}]', 'green')
+
+    device = 'cuda'
+    batch_size = 32
+    vggt, vggt_dtype = load_vggt(device=device)
+    to_tensor = ToTensor()
+
+    features = []
+
+    with torch.no_grad():
+        num_images = img_arrays.shape[0]
+        for i in range(0, num_images, batch_size):
+            img_batch_np = img_arrays[i:i+batch_size]
+            img_batch_list = [to_tensor(img) for img in img_batch_np]
+            img_batch = torch.stack(img_batch_list, dim=0).to(device=device, dtype=vggt_dtype).unsqueeze(1)
+            tokens, token_start_idx = vggt.aggregator(img_batch)
+            batch_pred = tokens[-1][:, :, token_start_idx:, :]
+            features.append(batch_pred.detach().cpu().numpy())
+
+    features = np.concatenate(features, axis=0)
+    features_chunk_size = (100, features.shape[1], features.shape[2], features.shape[3])
+    zarr_data.create_dataset('features', data=features, chunks=features_chunk_size, dtype='float32', overwrite=True, compressor=compressor)
+    cprint(f'features shape: {features.shape}, range: [{np.min(features)}, {np.max(features)}]', 'green')
+
     cprint(f'Saved zarr file to {save_dir}', 'green')
-    
-    cprint(f'Saved zarr file to {save_dir}', 'green')
-    
+
     # clean up
     del img_arrays, img_arrays_84, state_arrays, point_cloud_arrays, action_arrays, episode_ends_arrays
     del zarr_root, zarr_data, zarr_meta

@@ -14,6 +14,7 @@ def load_vggt(device="cuda"):
     v = VGGT()
     url = "https://huggingface.co/facebook/VGGT-1B/resolve/main/model.pt"
     v.load_state_dict(torch.hub.load_state_dict_from_url(url))
+    v.to(device)
     v.eval()
     vggt_dtype = torch.bfloat16 if torch.cuda.get_device_capability()[0] >= 8 else torch.float16
     return v, vggt_dtype
