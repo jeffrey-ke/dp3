@@ -3,8 +3,9 @@ from torch import nn
 import sys 
 from typing import Optional, Dict, Tuple, Union, List, Type
 from termcolor import cprint
-
-sys.path.append('/home/san/dp3/vggt')
+from pathlib import Path
+vggt_path = Path.cwd().parent.parent / "vggt"
+sys.path.append(vggt_path)
 from vggt.models.vggt import VGGT
 
 from diffusion_policy_3d.model.vision.pointnet_extractor import PointNetEncoderXYZ, create_mlp, DP3Encoder
@@ -47,8 +48,6 @@ def patch_dim_downscaler(n_views, n_patches, patch_dim):
     cprint(f"[SonicEncoder] Using patch dim only downscaler", "red")
     return model, features_dim
 
-
-
 class ConvBottleneck(nn.Module):
     def __init__(self, n_patches, dp3_encoder_dim, n_views=1, patch_dim=2048, **bottleneck_args):
         super().__init__()
@@ -87,7 +86,6 @@ class ConvBottleneck(nn.Module):
         projected_features = self.proj(features)
         return projected_features
 
-
 class SonicEncoder(nn.Module):
     VGGT_PATCH_SIZE=14
     def __init__(self, 
@@ -97,7 +95,6 @@ class SonicEncoder(nn.Module):
                  state_mlp_size=(64, 64), state_mlp_activation_fn=nn.ReLU,
                  **bottleneck_args,
                  ):
-        # super().__init__(self, observation_space, img_crop_shape, out_channel, state_mlp_size, state_mlp_activation_fn)
         super().__init__()
         self.imagination_key = 'imagin_robot'
         self.state_key = 'agent_pos'
@@ -124,7 +121,6 @@ class SonicEncoder(nn.Module):
         n_patches = self.image_shape[-1]//self.VGGT_PATCH_SIZE * self.image_shape[-2]//self.VGGT_PATCH_SIZE
         self.bottleneck = ConvBottleneck(n_patches, out_channel, **bottleneck_args)
         print(self.bottleneck)
-        # defining agent state mlp
         if len(state_mlp_size) == 0:
             raise RuntimeError(f"State mlp size is empty")
         elif len(state_mlp_size) == 1:
@@ -157,10 +153,11 @@ class SonicEncoder(nn.Module):
                     minibatch = images[i:i+self.vggt_batchsize]
                     # NOTE: vggt returns features from all 24 attention layers, only using last layers features here!
                     tokens, token_start_idx = self.vggt.aggregator(minibatch) 
-                    features.append(tokens[-1][:, :, token_start_idx:, :])
+                    self.selected_feature = 12
+                    features.append(tokens[self.selected_feature][:, :, token_start_idx:, :])
             self.vggt.to('cpu')
 
-        features = torch.cat(features, dim=0) 
+        features = torch.cat(features, dim=0) # recreating the batch dimension
         bottlenecked_features = self.bottleneck(features)
         cated_features = torch.cat([bottlenecked_features, robot_state_features], dim=-1)
         return cated_features
