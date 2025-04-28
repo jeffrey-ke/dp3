@@ -4,8 +4,7 @@ import sys
 from typing import Optional, Dict, Tuple, Union, List, Type
 from termcolor import cprint
 from pathlib import Path
-vggt_path = Path.cwd().parent.parent / "vggt"
-sys.path.append(vggt_path)
+from jutils.utils import pdb
 from vggt.models.vggt import VGGT
 
 from diffusion_policy_3d.model.vision.pointnet_extractor import PointNetEncoderXYZ, create_mlp, DP3Encoder
@@ -153,7 +152,7 @@ class SonicEncoder(nn.Module):
                     minibatch = images[i:i+self.vggt_batchsize]
                     # NOTE: vggt returns features from all 24 attention layers, only using last layers features here!
                     tokens, token_start_idx = self.vggt.aggregator(minibatch) 
-                    self.selected_feature = 12
+                    self.selected_feature = 6
                     features.append(tokens[self.selected_feature][:, :, token_start_idx:, :])
             self.vggt.to('cpu')
 
