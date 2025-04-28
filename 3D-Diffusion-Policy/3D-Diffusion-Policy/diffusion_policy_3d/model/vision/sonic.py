@@ -52,9 +52,9 @@ class ConvBottleneck(nn.Module):
         super().__init__()
         fusion_type = bottleneck_args.get("fusion_type", "no_pool")
         S = n_views
-        # self.token_downscaler, (_, n_patches_conv, patch_dim_conv) = conv_downscaler(n_views, n_patches, patch_dim)
+        self.token_downscaler, (_, n_patches_conv, patch_dim_conv) = conv_downscaler(n_views, n_patches, patch_dim)
         # TODO: Needs testing
-        self.token_downscaler, (_, n_patches_conv, patch_dim_conv) = patch_dim_downscaler(n_views, n_patches, patch_dim)
+        # self.token_downscaler, (_, n_patches_conv, patch_dim_conv) = patch_dim_downscaler(n_views, n_patches, patch_dim)
         if fusion_type == "no_pool":
             cprint(f"[{self.__class__.__name__}] Using no pooling", "red")
             final_reshaped_dim = (S * 1) * n_patches_conv * patch_dim_conv
@@ -76,7 +76,7 @@ class ConvBottleneck(nn.Module):
         
         # NOTE: Need ablations for avg pooling
         if self.fusion_type == "patch_pool": 
-            features = torch.mean(features, dim=2).values  # Shape should be (B, S, patch_dim // 8)
+            features = torch.mean(features, dim=2)
         elif self.fusion_type == "view_pool": # NOTE: Not needed atm as only 1 view
             features = torch.max(features, dim=1).values # Shape should be (B, n_patches // 8, patch_dim // 8)
         
