@@ -30,6 +30,7 @@ from diffusion_policy_3d.common.pytorch_util import dict_apply
 from diffusion_policy_3d.common.model_util import print_params
 from diffusion_policy_3d.model.vision.pointnet_extractor import DP3Encoder
 from diffusion_policy_3d.model.vision.sonic import SonicEncoder
+from diffusion_policy_3d.model.vision.dino_encoder import DinoEncoder
 from diffusion_policy_3d.vis_utils.img_utils import save_test_images
 
 class DP3(BasePolicy):
@@ -83,11 +84,10 @@ class DP3(BasePolicy):
         #             use_pc_color=use_pc_color,
         #             pointnet_type=pointnet_type,
         #                  )
-
-        obs_encoder = SonicEncoder(observation_space=obs_dict,
-                                   img_crop_shape=crop_shape,
-                                   out_channel=encoder_output_dim,
-                                   fusion_type="patch_pool")
+        cprint("Using DinoEncoder!!", "red")
+        obs_encoder = DinoEncoder(observation_space=obs_dict,
+                                  out_channel=encoder_output_dim,
+                                  )
 
         # if encoder_type == "dp3":
         #     obs_encoder = DP3Encoder(observation_space=obs_dict,
