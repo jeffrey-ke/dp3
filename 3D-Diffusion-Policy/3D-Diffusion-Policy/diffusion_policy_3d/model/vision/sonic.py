@@ -76,7 +76,7 @@ class ConvBottleneck(nn.Module):
         
         # NOTE: Need ablations for avg pooling
         if self.fusion_type == "patch_pool": 
-            features = torch.max(features, dim=2).values  # Shape should be (B, S, patch_dim // 8)
+            features = torch.mean(features, dim=2).values  # Shape should be (B, S, patch_dim // 8)
         elif self.fusion_type == "view_pool": # NOTE: Not needed atm as only 1 view
             features = torch.max(features, dim=1).values # Shape should be (B, n_patches // 8, patch_dim // 8)
         
