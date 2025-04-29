@@ -87,7 +87,7 @@ class DP3(BasePolicy):
         obs_encoder = SonicEncoder(observation_space=obs_dict,
                                    img_crop_shape=crop_shape,
                                    out_channel=encoder_output_dim,
-                                   fusion_type="view_pool")
+                                   fusion_type="patch_pool")
 
         # if encoder_type == "dp3":
         #     obs_encoder = DP3Encoder(observation_space=obs_dict,
