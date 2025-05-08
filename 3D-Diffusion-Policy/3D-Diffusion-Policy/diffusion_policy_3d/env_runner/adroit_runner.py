@@ -27,6 +27,7 @@ class AdroitRunner(BaseRunner):
                  tqdm_interval_sec=5.0,
                  task_name=None,
                  use_point_crop=True,
+                 cam_list=None,
                  ):
         super().__init__(output_dir)
         self.task_name = task_name
@@ -36,7 +37,7 @@ class AdroitRunner(BaseRunner):
         def env_fn():
             return MultiStepWrapper(
                 SimpleVideoRecordingWrapper(
-                    MujocoPointcloudWrapperAdroit(env=AdroitEnv(env_name=task_name, use_point_cloud=True, render_size=render_size),
+                    MujocoPointcloudWrapperAdroit(env=AdroitEnv(env_name=task_name, cam_list=cam_list, use_point_cloud=True, render_size=render_size),
                                                   env_name='adroit_'+task_name, use_point_crop=use_point_crop,)),
                 n_obs_steps=n_obs_steps,
                 n_action_steps=n_action_steps,

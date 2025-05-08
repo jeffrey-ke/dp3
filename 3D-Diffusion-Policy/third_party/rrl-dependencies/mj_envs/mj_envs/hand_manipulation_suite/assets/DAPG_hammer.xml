@@ -43,7 +43,32 @@
         <!-- Camera for the VIL paper -->
         <camera name="vil_camera" pos="0 -1.2 1.2" quat="0.92388 0.382683 0 0" />
         <camera name="top" pos="0 0 1.1" euler="0 0 3.14" />
- 
+
+        <!-- <camera name="front" pos="0 -1.5 0.5" quat="0.9396926 0.3420201 0 0" />
+        <camera name="front_right" pos="1.06 -1.06 0.5" quat="0.9396926 0.2418511 0.2418511 0" />
+        <camera name="right" pos="1.5 0 0.5" quat="0.9396926 0 0.3420201 0" />
+        <camera name="back_right" pos="1.06 1.06 0.5" quat="0.9396926 -0.2418511 0.2418511 0" />
+        <camera name="back" pos="0 1.5 0.5" quat="0.9396926 -0.3420201 0 0" />
+        <camera name="back_left" pos="-1.06 1.06 0.5" quat="0.9396926 -0.2418511 -0.2418511 0" />
+        <camera name="left" pos="-1.5 0 0.5" quat="0.9396926 0 -0.3420201 0" />
+        <camera name="front_left" pos="-1.06 -1.06 0.5" quat="0.9396926 0.2418511 -0.2418511 0" /> -->
+        
+        <!-- Circle of cameras at a higher elevation for more top-down perspective -->
+        <camera name="high_front" pos="0 -0.8 0.8" quat="0.8660254 0.5 0 0" />
+        <camera name="high_front_right" pos="0.566 -0.566 0.8" quat="0.8660254 0.3535534 0.3535534 0" />
+        <camera name="high_right" pos="0.8 0 0.8" quat="0.8660254 0 0.5 0" />
+        <camera name="high_back_right" pos="0.566 0.566 0.8" quat="0.8660254 -0.3535534 0.3535534 0" />
+        <camera name="high_back" pos="0 0.8 0.8" quat="0.8660254 -0.5 0 0" />
+        <camera name="high_back_left" pos="-0.566 0.566 0.8" quat="0.8660254 -0.3535534 -0.3535534 0" />
+        <camera name="high_left" pos="-0.8 0 0.8" quat="0.8660254 0 -0.5 0" />
+        <camera name="high_front_left" pos="-0.566 -0.566 0.8" quat="0.8660254 0.3535534 -0.3535534 0" />
+
+        <!-- Optional: Lower angle cameras to view the interaction from below -->
+        <!-- <camera name="low_front" pos="0 -0.9 0.3" quat="0.9781476 0.2079117 0 0" />
+        <camera name="low_right" pos="0.9 0 0.3" quat="0.9781476 0 0.2079117 0" />
+        <camera name="low_back" pos="0 0.9 0.3" quat="0.9781476 -0.2079117 0 0" />
+        <camera name="low_left" pos="-0.9 0 0.3" quat="0.9781476 0 -0.2079117 0" /> -->
+        
         <!-- ======= TABLE ======= -->
         <body name="table">
             <!-- <geom size="0.5 0.5 0.025" type="plane" material="table2d" /> --> <!-- Plane has better contacts -->

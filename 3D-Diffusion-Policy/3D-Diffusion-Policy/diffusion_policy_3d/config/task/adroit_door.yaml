@@ -2,9 +2,14 @@ name: adroit_door
 
 task_name: door
 
+
+mage_shape: &image_shape [3, 168, 168]
 shape_meta: &shape_meta
   # acceptable types: rgb, low_dim
   obs:
+    image:
+      shape: *image_shape
+      type: rgb
     point_cloud:
       shape: [512, 3]
       type: point_cloud

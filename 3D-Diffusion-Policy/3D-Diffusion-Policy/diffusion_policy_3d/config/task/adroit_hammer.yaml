@@ -29,6 +29,8 @@ env_runner:
   task_name: hammer
   # render_size: 84 # NOTE: default DP3 setting
   render_size: 168 # NOTE: for VGGT setting
+  cam_list: ${policy.cam_list}
+  # cam_list: ['top']
   use_point_crop: ${policy.use_point_crop}
 
 dataset:

@@ -84,24 +84,24 @@ class DP3(BasePolicy):
         #             pointnet_type=pointnet_type,
         #                  )
 
-        obs_encoder = SonicEncoder(observation_space=obs_dict,
-                                   img_crop_shape=crop_shape,
-                                   out_channel=encoder_output_dim,
-                                   fusion_type="patch_pool")
-
-        # if encoder_type == "dp3":
-        #     obs_encoder = DP3Encoder(observation_space=obs_dict,
-        #             img_crop_shape=crop_shape,
-        #             out_channel=encoder_output_dim,
-        #             pointcloud_encoder_cfg=pointcloud_encoder_cfg,
-        #             use_pc_color=use_pc_color,
-        #             pointnet_type=pointnet_type,
-        #                  )
-        # elif encoder_type == "sonic":
-        #     obs_encoder = SonicEncoder(observation_space=obs_dict,
+        # obs_encoder = SonicEncoder(observation_space=obs_dict,
         #                            img_crop_shape=crop_shape,
         #                            out_channel=encoder_output_dim,
         #                            fusion_type="patch_pool")
+
+        if encoder_type == "dp3":
+            obs_encoder = DP3Encoder(observation_space=obs_dict,
+                    img_crop_shape=crop_shape,
+                    out_channel=encoder_output_dim,
+                    pointcloud_encoder_cfg=pointcloud_encoder_cfg,
+                    use_pc_color=use_pc_color,
+                    pointnet_type=pointnet_type,
+                         )
+        elif encoder_type == "sonic":
+            obs_encoder = SonicEncoder(observation_space=obs_dict,
+                                   img_crop_shape=crop_shape,
+                                   out_channel=encoder_output_dim,
+                                   fusion_type="patch_pool_max")
         
         
         # # create diffusion model
