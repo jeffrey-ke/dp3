@@ -1,11 +1,10 @@
 
-TODOs
+Current branch changes
 
-[] create training script.sh for Pooling + Downscaler experiments
-
-[] Check simulation image rendering to capture hihg-res images
-    [] Train baseline with DP3 encoder
-    [] Train the best model from above 
+- Multi-view images rendered in Adroit
+- VGGT features dumped in zarr
+- Attention bottleneck added, not checked!
+- can run with algo name as sonic now!! yay!
 
 
 
