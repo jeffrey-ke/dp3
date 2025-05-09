@@ -10,7 +10,6 @@ print(f'Loading dp3 from path {dp3_path}')
 if not os.path.exists(dp3_path):
     raise Exception("dp3 path does not exist: " + dp3_path)
 sys.path.append(dp3_path)
-# from models.sonic import SonicEncoder
 import math
 import torch
 import torch.nn as nn
@@ -21,7 +20,7 @@ from termcolor import cprint
 import copy
 import time
 import pytorch3d.ops as torch3d_ops
-
+from jutils.utils import pdb
 from diffusion_policy_3d.model.common.normalizer import LinearNormalizer
 from diffusion_policy_3d.policy.base_policy import BasePolicy
 from diffusion_policy_3d.model.diffusion.conditional_unet1d import ConditionalUnet1D
@@ -299,7 +298,7 @@ class DP3(BasePolicy):
     def compute_loss(self, batch):
         # normalize input
 
-        nobs = self.normalizer.normalize(batch['obs'])
+        nobs = self.normalizer.normalize(batch['obs']) 
         nactions = self.normalizer['action'].normalize(batch['action'])
 
         if not self.use_pc_color:
@@ -319,7 +318,6 @@ class DP3(BasePolicy):
         cond_data = trajectory
         
        
-        
         if self.obs_as_global_cond:
             # reshape B, T, ... to B*T
             this_nobs = dict_apply(nobs, 
