@@ -2,12 +2,15 @@ from typing import Dict
 import torch
 import numpy as np
 import copy
+import matplotlib.pyplot as plt
 from diffusion_policy_3d.common.pytorch_util import dict_apply
 from diffusion_policy_3d.common.replay_buffer import ReplayBuffer
 from diffusion_policy_3d.common.sampler import (
     SequenceSampler, get_val_mask, downsample_mask)
 from diffusion_policy_3d.model.common.normalizer import LinearNormalizer, SingleFieldLinearNormalizer
 from diffusion_policy_3d.dataset.base_dataset import BaseDataset
+from jutils.utils import pdb
+from pathlib import Path
 
 class MetaworldDataset(BaseDataset):
     def __init__(self,
@@ -21,7 +24,7 @@ class MetaworldDataset(BaseDataset):
             ):
         super().__init__()
         self.replay_buffer = ReplayBuffer.copy_from_path(
-            zarr_path, keys=['state', 'action', 'point_cloud'])
+            zarr_path, keys=['state', 'action', 'point_cloud', 'img_high_def'])
         val_mask = get_val_mask(
             n_episodes=self.replay_buffer.n_episodes, 
             val_ratio=val_ratio,
@@ -59,10 +62,17 @@ class MetaworldDataset(BaseDataset):
         data = {
             'action': self.replay_buffer['action'],
             'agent_pos': self.replay_buffer['state'][...,:],
+            'img' : self.replay_buffer['img_high_def'],
             'point_cloud': self.replay_buffer['point_cloud'],
         }
         normalizer = LinearNormalizer()
-        normalizer.fit(data=data, last_n_dims=1, mode=mode, **kwargs)
+        data_min = {
+            'img': 0,
+        }
+        data_max = {
+            'img': 1,
+        }
+        normalizer.fit(data=data, last_n_dims=1, mode=mode, data_min=data_min, data_max=data_max, **kwargs)
         return normalizer
 
     def __len__(self) -> int:
@@ -71,10 +81,11 @@ class MetaworldDataset(BaseDataset):
     def _sample_to_data(self, sample):
         agent_pos = sample['state'][:,].astype(np.float32)
         point_cloud = sample['point_cloud'][:,].astype(np.float32)
-
+        img_high_def = sample['img_high_def'].astype(np.uint8)
         data = {
             'obs': {
                 'point_cloud': point_cloud, 
+                'img' : img_high_def,
                 'agent_pos': agent_pos, 
             },
             'action': sample['action'].astype(np.float32)
