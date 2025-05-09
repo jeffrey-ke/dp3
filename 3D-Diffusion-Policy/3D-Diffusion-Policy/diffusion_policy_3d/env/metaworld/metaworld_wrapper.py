@@ -1,4 +1,6 @@
 import torch
+from jutils.utils import pdb
+from pathlib import Path
 import gym
 import numpy as np
 import matplotlib.pyplot as plt
@@ -120,7 +122,7 @@ class MetaWorldEnv(gym.Env):
 
     def get_rgb(self):
         # cam names: ('topview', 'corner', 'corner2', 'corner3', 'behindGripper', 'gripperPOV')
-        img = self.env.sim.render(width=self.image_size, height=self.image_size, camera_name="corner2", device_id=self.device_id)
+        img = self.render_high_res(resolution=self.image_size)
         return img
 
     def render_high_res(self, resolution=1024):
@@ -161,6 +163,7 @@ class MetaWorldEnv(gym.Env):
 
     def get_visual_obs(self):
         obs_pixels = self.get_rgb()
+        obs_pixels_high_def = self.render_high_res(resolution=168)
         robot_state = self.get_robot_state()
         point_cloud, depth = self.get_point_cloud()
         
@@ -169,6 +172,7 @@ class MetaWorldEnv(gym.Env):
 
         obs_dict = {
             'image': obs_pixels,
+            'image_high_res' : obs_pixels_high_def,
             'depth': depth,
             'agent_pos': robot_state,
             'point_cloud': point_cloud,
@@ -183,6 +187,11 @@ class MetaWorldEnv(gym.Env):
 
 
         obs_pixels = self.get_rgb()
+        obs_pixels_high_def = self.render_high_res(resolution=512)
+        # pdb()
+        # images_dir = Path("images")
+        # images_dir.mkdir(exist_ok=True, parents=True)
+        # plt.imsave(images_dir / "img.png", obs_pixels_high_def)
         robot_state = self.get_robot_state()
         point_cloud, depth = self.get_point_cloud()
         
@@ -191,6 +200,7 @@ class MetaWorldEnv(gym.Env):
 
         obs_dict = {
             'image': obs_pixels,
+            'image_high_res' : obs_pixels_high_def,
             'depth': depth,
             'agent_pos': robot_state,
             'point_cloud': point_cloud,
@@ -208,6 +218,7 @@ class MetaWorldEnv(gym.Env):
         self.cur_step = 0
 
         obs_pixels = self.get_rgb()
+        obs_pixels_high_def = self.render_high_res(resolution=168)
         robot_state = self.get_robot_state()
         point_cloud, depth = self.get_point_cloud()
         
@@ -216,6 +227,7 @@ class MetaWorldEnv(gym.Env):
 
         obs_dict = {
             'image': obs_pixels,
+            'image_high_res' : obs_pixels_high_def,
             'depth': depth,
             'agent_pos': robot_state,
             'point_cloud': point_cloud,
