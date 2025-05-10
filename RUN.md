@@ -14,20 +14,17 @@ shape_meta: &shape_meta
       shape: *image_shape
       type: rgb
 
-dataset:
-  render_size: 168
-
 env_runner:
+  render_size: 168
   cam_list: ${policy.cam_list}
+
+dataset:
+  # If you're using a feature encoder and the expert zarr has features column, add:
+  zarr_keys: ${policy.expert_zarr_keys}
+  feature_layer: ${policy.encoder_feature_layer}
+  
 ```
 
-### Feature Encoder Configuration
-If you're using a feature encoder and the expert zarr has features column, add:
-
-```yaml
-zarr_keys: ${policy.expert_zarr_keys}
-feature_layer: ${policy.encoder_feature_layer}
-```
 
 ### Sonic Configuration
 In `sonic.yaml`, set:
