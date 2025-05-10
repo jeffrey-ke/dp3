@@ -6,7 +6,8 @@ cd third_party/VRL3/src
 
 task=${1}
 feature_layer=${2:-None}
-CUDA_VISIBLE_DEVICES=0 python gen_demonstration_expert_custom_res.py --env_name $task \
+gpu_id=${3:-0}
+CUDA_VISIBLE_DEVICES=$gpu_id python gen_demonstration_expert_custom_res.py --env_name $task \
                         --num_episodes 10 \
                         --root_dir "../../../3D-Diffusion-Policy/data/" \
                         --expert_ckpt_path "../ckpts/vrl3_${task}.pt" \
