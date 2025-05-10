@@ -55,6 +55,7 @@ class DP3(BasePolicy):
             pointnet_type="pointnet",
             pointcloud_encoder_cfg=None,
             encoder_type="dp3",
+            encoder_cfg=None,
             # parameters passed to step
             **kwargs):
         super().__init__()
@@ -101,7 +102,8 @@ class DP3(BasePolicy):
             obs_encoder = SonicEncoder(observation_space=obs_dict,
                                    img_crop_shape=crop_shape,
                                    out_channel=encoder_output_dim,
-                                   fusion_type="patch_pool_max")
+                                   **encoder_cfg,
+                                )
         
         
         # # create diffusion model

@@ -26,7 +26,10 @@ policy:
   use_down_condition: true
   use_mid_condition: true
   use_up_condition: true
+
+  expert_zarr_keys: ['state', 'action', 'point_cloud', 'img', 'features_6']
   
+
   diffusion_step_embed_dim: 128
   down_dims:
   - 512
@@ -60,8 +63,12 @@ policy:
 
   use_pc_color: false
   pointnet_type: "pointnet"
+  
   encoder_type: "sonic"
-
+  encoder_cfg:
+    feature_layer: 6
+    fusion_type: "patch_pool_max"
+    
   pointcloud_encoder_cfg:
     in_channels: 3
     out_channels: ${policy.encoder_output_dim}

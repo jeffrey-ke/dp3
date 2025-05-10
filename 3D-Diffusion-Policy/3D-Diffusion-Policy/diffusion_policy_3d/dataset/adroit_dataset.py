@@ -17,13 +17,14 @@ class AdroitDataset(BaseDataset):
             pad_after=0,
             seed=42,
             val_ratio=0.0,
+            zarr_keys=['state', 'action', 'point_cloud', 'img'],
             max_train_episodes=None,
             task_name=None,
             ):
         super().__init__()
         self.task_name = task_name
         self.replay_buffer = ReplayBuffer.copy_from_path(
-            zarr_path, keys=['state', 'action', 'point_cloud', 'img'])
+            zarr_path, keys=zarr_keys)
         val_mask = get_val_mask(
             n_episodes=self.replay_buffer.n_episodes, 
             val_ratio=val_ratio,
@@ -44,6 +45,7 @@ class AdroitDataset(BaseDataset):
         self.horizon = horizon
         self.pad_before = pad_before
         self.pad_after = pad_after
+        self.zarr_keys = zarr_keys
 
     def get_validation_dataset(self):
         val_set = copy.copy(self)
@@ -63,15 +65,21 @@ class AdroitDataset(BaseDataset):
             'agent_pos': self.replay_buffer['state'][...,:],
             'point_cloud': self.replay_buffer['point_cloud'],
             'img': self.replay_buffer['img'],
-        }
+        }    
         data_min = {
             'img': 0,
         }
         data_max = {
             'img': 1,
         }
+
         normalizer = LinearNormalizer()
         normalizer.fit(data=data, last_n_dims=1, mode=mode, data_min=data_min, data_max=data_max, **kwargs)
+
+        # NOTE: Setting identity normalizer for all other keys!
+        for key in self.zarr_keys:
+            if key.startswith('features_') and key not in data:
+                normalizer['features'] = SingleFieldLinearNormalizer.create_identity()
         return normalizer
 
     def __len__(self) -> int:
@@ -82,11 +90,22 @@ class AdroitDataset(BaseDataset):
         # TODO: change batch data depending on the encoder being called!
         point_cloud = sample['point_cloud'][:,].astype(np.float32) # (T, 1024, 6)
         img = sample['img'][:,].astype(np.float32)
+
+        # Handle features from different layers
+        features = None
+        if 'features' in sample.keys():
+            features = sample['features']
+        elif any(key.startswith('features_') for key in sample.keys()):
+            # Combine all feature layers into a single features key
+            feature_layers = [key for key in sample.keys() if key.startswith('features_')]
+            features = np.concatenate([sample[key] for key in feature_layers], axis=-1)
+
         data = {
             'obs': {
                 'point_cloud': point_cloud, # T, 1024, 6
                 'agent_pos': agent_pos, # T, D_pos
                 'img': img, # T , img_h ,img_w, 3
+                **({'features': features} if features is not None else {})
             },
             'action': sample['action'].astype(np.float32) # T, D_action
         }
@@ -95,8 +114,6 @@ class AdroitDataset(BaseDataset):
     def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
         sample = self.sampler.sample_sequence(idx)
         data = self._sample_to_data(sample)
-        # print(data.keys())
         torch_data = dict_apply(data, torch.from_numpy)
-        # print(torch_data.keys())
         return torch_data
 

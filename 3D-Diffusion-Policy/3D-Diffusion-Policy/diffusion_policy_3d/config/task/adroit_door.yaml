@@ -3,7 +3,7 @@ name: adroit_door
 task_name: door
 
 
-mage_shape: &image_shape [3, 168, 168]
+image_shape: &image_shape [3, 168, 168]
 shape_meta: &shape_meta
   # acceptable types: rgb, low_dim
   obs:
@@ -39,3 +39,4 @@ dataset:
   seed: 42
   val_ratio: 0.02
   max_train_episodes: 90
+  zarr_keys: ${policy.expert_zarr_keys}
