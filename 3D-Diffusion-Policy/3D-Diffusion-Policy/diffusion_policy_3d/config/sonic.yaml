@@ -28,7 +28,7 @@ policy:
   use_up_condition: true
 
   expert_zarr_keys: ['state', 'action', 'point_cloud', 'img', 'features_6']
-  
+  # expert_zarr_keys: ['state', 'action', 'point_cloud', 'img']
 
   diffusion_step_embed_dim: 128
   down_dims:

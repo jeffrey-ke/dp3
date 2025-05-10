@@ -305,9 +305,6 @@ class SonicEncoder(nn.Module):
                         features.append(tokens[-1][:, :, token_start_idx:, :])
                 self.vggt.to('cpu')
             features = torch.cat(features, dim=0) 
-        # This shape check is too rigid - batch size can vary
-        if features.shape[1:] != (1, 144, 2048):
-            import pdb; pdb.set_trace()
         bottlenecked_features = self.bottleneck(features)
         cated_features = torch.cat([bottlenecked_features, robot_state_features], dim=-1)
         return cated_features

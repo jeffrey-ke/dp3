@@ -27,7 +27,8 @@ env_runner:
   n_action_steps: ${n_action_steps}
   fps: 10
   task_name: door
-  render_size: 84
+  render_size: 168
+  cam_list: ${policy.cam_list}
   use_point_crop: ${policy.use_point_crop}
 
 dataset:
