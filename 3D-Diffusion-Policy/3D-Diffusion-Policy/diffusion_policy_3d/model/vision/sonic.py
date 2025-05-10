@@ -301,7 +301,7 @@ class SonicEncoder(nn.Module):
                     for i in range(0, images.shape[0], self.vggt_batchsize):
                         minibatch = images[i:i+self.vggt_batchsize]
                         # NOTE: vggt returns features from all 24 attention layers, only using last layers features here!
-                        tokens, token_start_idx = self.vggt.aggregator(minibatch) 
+                        tokens, token_start_idx = self.vggt.aggregator(minibatch, self.feature_layer)
                         features.append(tokens[-1][:, :, token_start_idx:, :])
                 self.vggt.to('cpu')
             features = torch.cat(features, dim=0) 

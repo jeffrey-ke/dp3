@@ -187,6 +187,7 @@ class Aggregator(nn.Module):
     def forward(
         self,
         images: torch.Tensor,
+        aa_block_num=None
     ) -> Tuple[List[torch.Tensor], int]:
         """
         Args:
@@ -199,6 +200,8 @@ class Aggregator(nn.Module):
                 and the patch_start_idx indicating where patch tokens begin.
         """
         B, S, C_in, H, W = images.shape
+        if aa_block_num:
+            self.aa_block_num = aa_block_num
 
         if C_in != 3:
             raise ValueError(f"Expected 3 input channels, got {C_in}")
