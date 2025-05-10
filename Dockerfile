@@ -2,10 +2,7 @@
 FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
 
 # Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    TZ=UTC \
-    DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -35,22 +32,54 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     unzip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
-
-# Set Python aliases
-RUN ln -sf /usr/bin/python3.10 /usr/bin/python && \
-    ln -sf /usr/bin/python3.10 /usr/bin/python3
+# Miniconda installation
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O / tmp/miniconda.sh && \
+    bash /tmp/miniconda.sh -b -p /opt/conda && \
+    rm /tmp/miniconda.sh
+RUN echo "source /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc
+RUN conda create -n dp3 python=3.8
+SHELL ["conda", "run", "--no-capture-output", "-n", "dp3", "bash", "-c"]
 
 # Set working directory
-WORKDIR /app
+WORKDIR ws
 
 # Clone the repository
-RUN git clone https://github.com/YanjieZe/3D-Diffusion-Policy.git .
+RUN git clone git@github.com:jeffrey-ke/dp3.git
 
 # Install PyTorch with CUDA support (following the exact version in INSTALL.md)
-RUN pip3 install --no-cache-dir torch==2.0.1+cu118 torchvision==0.15.2+cu118 --extra-index-url https://download.pytorch.org/whl/cu118
+WORKDIR dp3/3D-Diffusion-Policy.git
+RUN pip install --no-cache-dir torch==2.0.1+cu118 \
+                                torchvision==0.15.2+cu118 \
+                                --extra-index-url https://download.pytorch.org/whl/cu118
+# install dp3
+RUN pip install -e 3D-Diffusion-Policy.git
+# install mujoco
+RUN wget https://github.com/deepmind/mujoco/releases/download/2.1.0/mujoco210-linux-x86_64.tar.gz \ 
+     -O ~/mujoco210.tar.gz --no-check-certificate
+RUN tar -xvzf ~/mujoco210.tar.gz
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${HOME}/.mujoco/mujoco210/bin \
+    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/nvidia \
+    LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64 \
+    MUJOCO_GL=egl
+
+WORKDIR ../third_party
+RUN pip install -e mujoco-py-2.1.2.14
+# install sim env
+RUN pip install setuptools==59.5.0 Cython==0.29.35 patchelf==0.17.2.0
+RUN pip install -e dexart-release gym-0.21.0 Metaworld rrl-dependencies/mjenvs rrl-dependencies/mjrl
+COPY vrl3_ckpts.zip VRL3/
+RUN unzip VRL3/vrl3_ckpts.zip -d VRL3 && mv vrl3_ckpts ckpts
+COPY dexart_assets.zip dexart-release/
+RUN unzip dexart-release/dexart_assets.zip -d dexart-release
+
+# install pytorch3d
+RUN pip install "git+https://github.com/facebookresearch/pytorch3d.git"
+
+# install some necessary packages
+RUN pip install zarr==2.12.0 wandb ipdb gpustat dm_control omegaconf hydra-core==1.2.0 dill==0.3.5.1 einops==0.4.1 diffusers==0.11.1 numba==0.56.4 moviepy imageio av matplotlib termcolor huggingface_hub==0.25.2
 
 # Install project dependencies as specified in INSTALL.md
-RUN pip3 install --no-cache-dir \
+RUN pip install --no-cache-dir \
     diffusers==0.25.0 \
     accelerate \
     einops \
@@ -60,43 +89,6 @@ RUN pip3 install --no-cache-dir \
     open3d \
     transforms3d
 
-# Install MuJoCo
-RUN mkdir -p /root/.mujoco \
-    && wget https://github.com/deepmind/mujoco/releases/download/2.1.0/mujoco210-linux-x86_64.tar.gz -O mujoco.tar.gz \
-    && tar -xvzf mujoco.tar.gz -C /root/.mujoco \
-    && rm mujoco.tar.gz
-
-# Set MuJoCo environment variables
-ENV LD_LIBRARY_PATH=/root/.mujoco/mujoco210/bin:${LD_LIBRARY_PATH}
-ENV MUJOCO_PY_MUJOCO_PATH=/root/.mujoco/mujoco210
-ENV MUJOCO_GL=egl
-
-# Install mujoco-py with the specific version
-RUN pip3 install --no-cache-dir 'mujoco-py<2.2,>=2.1'
-
-# Fix potential mujoco-py installation issues
-RUN mkdir -p /usr/lib/nvidia-000
-ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/lib/nvidia-000
-
-# Clone and install pointnet2 exactly as in INSTALL.md
-RUN mkdir -p third_party \
-    && cd third_party \
-    && git clone https://github.com/erikwijmans/Pointnet2_PyTorch.git \
-    && cd Pointnet2_PyTorch \
-    && pip install -e .
-
-# Clone and install clip exactly as in INSTALL.md
-RUN pip3 install --no-cache-dir ftfy regex tqdm \
-    && pip3 install --no-cache-dir git+https://github.com/openai/CLIP.git
-
-# Install the project itself
-WORKDIR /app
-RUN pip3 install --no-cache-dir -e .
-
-# Set environment variables for GPU use
-ENV NVIDIA_VISIBLE_DEVICES all
-ENV NVIDIA_DRIVER_CAPABILITIES compute,utility,graphics
-ENV PYOPENGL_PLATFORM egl
-
 # Default command
+RUN echo "conda activate dp3" >> ~/.bashrc
 CMD ["/bin/bash"]
