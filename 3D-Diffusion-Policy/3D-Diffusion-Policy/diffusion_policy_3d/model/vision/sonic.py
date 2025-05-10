@@ -4,7 +4,6 @@ import sys
 from typing import Optional, Dict, Tuple, Union, List, Type
 from termcolor import cprint
 
-sys.path.append('/home/san/dp3/vggt')
 from vggt.models.vggt import VGGT
 
 from diffusion_policy_3d.model.vision.pointnet_extractor import PointNetEncoderXYZ, create_mlp, DP3Encoder
