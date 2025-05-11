@@ -3,6 +3,7 @@ FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
+SHELL ["/bin/bash", "-c"]
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -33,26 +34,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 # Miniconda installation
-RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O / tmp/miniconda.sh && \
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
     bash /tmp/miniconda.sh -b -p /opt/conda && \
     rm /tmp/miniconda.sh
-RUN echo "source /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc
-RUN conda create -n dp3 python=3.8
-SHELL ["conda", "run", "--no-capture-output", "-n", "dp3", "bash", "-c"]
+RUN echo "source /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
+    source /opt/conda/etc/profile.d/conda.sh && \ 
+    conda create -n dp3 python=3.8 -y
+SHELL ["/opt/conda/bin/conda", "run", "--no-capture-output", "-n", "dp3", "/bin/bash", "-c"]
 
 # Set working directory
 WORKDIR ws
 
 # Clone the repository
-RUN git clone git@github.com:jeffrey-ke/dp3.git
+RUN git clone https://github.com/jeffrey-ke/dp3.git
 
 # Install PyTorch with CUDA support (following the exact version in INSTALL.md)
-WORKDIR dp3/3D-Diffusion-Policy.git
+WORKDIR dp3/3D-Diffusion-Policy
 RUN pip install --no-cache-dir torch==2.0.1+cu118 \
                                 torchvision==0.15.2+cu118 \
                                 --extra-index-url https://download.pytorch.org/whl/cu118
 # install dp3
-RUN pip install -e 3D-Diffusion-Policy.git
+RUN pip install -e 3D-Diffusion-Policy
 # install mujoco
 RUN wget https://github.com/deepmind/mujoco/releases/download/2.1.0/mujoco210-linux-x86_64.tar.gz \ 
      -O ~/mujoco210.tar.gz --no-check-certificate
