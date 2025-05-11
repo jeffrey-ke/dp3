@@ -292,18 +292,41 @@ class SonicEncoder(nn.Module):
         images = images.unsqueeze(1) # VGGT expects B, N_views, C, H, W
         if 'features' in observations.keys():
             features = observations['features']
+
+            #  debug if cached features are correct, save expert in torch.float32
+            # with torch.no_grad():
+            #     features = []
+            #     for i in range(0, images.shape[0], self.vggt_batchsize):
+            #         minibatch = images[i:i+self.vggt_batchsize].to(self.vggt_dtype)
+            #         tokens, token_start_idx = self.vggt.aggregator(minibatch, self.feature_layer)
+            #         features.append(tokens[-1][:, :, token_start_idx:, :])
+            # features = torch.cat(features, dim=0) 
+            # features = features.to(saved_features.device)
+            # # Calculate number of close indices between features and saved_features
+            # close_threshold = 1e-5
+            # num_close = torch.sum(torch.abs(features - saved_features) < close_threshold).item()
+            # total_elements = features.numel()
+            # print(f"Number of close elements: {num_close} out of {total_elements} ({100.0 * num_close / total_elements:.2f}%)")
         else:
             with torch.no_grad():
-                self.vggt.to(images.device)
+                # self.vggt.to(images.device)
+                # import pdb; pdb.set_trace()
                 with torch.amp.autocast('cuda', dtype=self.vggt_dtype):
-                    features = []
-                    for i in range(0, images.shape[0], self.vggt_batchsize):
-                        minibatch = images[i:i+self.vggt_batchsize]
-                        # NOTE: vggt returns features from all 24 attention layers, only using last layers features here!
-                        tokens, token_start_idx = self.vggt.aggregator(minibatch, self.feature_layer)
-                        features.append(tokens[-1][:, :, token_start_idx:, :])
-                self.vggt.to('cpu')
-            features = torch.cat(features, dim=0) 
+
+                    tokens, token_start_idx = self.vggt.aggregator(images, self.feature_layer)
+                    features = tokens[-1][:, :, token_start_idx:, :]    
+                    
+                    # NOTE: batching logic for vggt
+                    # features = []
+                    # for i in range(0, images.shape[0], self.vggt_batchsize):
+                    #     minibatch = images[i:i+self.vggt_batchsize]
+                    #     # NOTE: vggt returns features from all 24 attention layers, only using last layers features here!
+                    #     tokens, token_start_idx = self.vggt.aggregator(minibatch, self.feature_layer)
+                    #     features.append(tokens[-1][:, :, token_start_idx:, :])
+                    # features = torch.cat(features, dim=0) 
+
+                # self.vggt.to('cpu')
+
         bottlenecked_features = self.bottleneck(features)
         cated_features = torch.cat([bottlenecked_features, robot_state_features], dim=-1)
         return cated_features

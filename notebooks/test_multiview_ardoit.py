@@ -14,7 +14,7 @@ def test_adroit_cameras():
     # cam_list = ['fixed', 'vil_camera', 'top', 'front_low', 'rear', 'left_side', 'top_high', 'cam0', 'cam1', 'cam2', 'cam3', 'cam4', 'cam5', 'cam6', 'cam7']
     
     # cam_list = ['fixed', 'vil_camera', 'top', 'front', 'front_right', 'right', 'back_right', 'back', 'back_left', 'left', 'front_left']
-    cam_list = ['fixed', 'vil_camera', 'top', 'high_front', 'high_front_right', 'high_right', 'high_back_right', 'high_back', 'high_back_left', 'high_left', 'high_front_left']
+    cam_list = ['fixed', 'vil_camera', 'top', 'high_front', 'high_front_right', 'high_right', 'high_back_right', 'high_back', 'high_back_left', 'high_left', 'high_front_left', 'right']
     # cam_list = ['low_front', 'low_right', 'low_back', 'low_left']
     # Initialize environment with all cameras
     env = AdroitEnv(
@@ -46,14 +46,10 @@ def test_adroit_cameras():
         # Convert from (C, H, W) to (H, W, C) for matplotlib
         
         
-        
-        # Create figure and save
-        plt.figure(figsize=(10, 10))
-        plt.imshow(img)
-        plt.title(f'Camera: {cam_name}')
-        plt.axis('off')
-        plt.savefig(os.path.join(output_dir, f'{cam_name}.png'))
-        plt.close()
+        # Save with cv2
+        import cv2
+        img = (img).astype(np.uint8)
+        cv2.imwrite(os.path.join(output_dir, f'{cam_name}.png'), cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
         
         print(f"Saved image for camera: {cam_name}")
         i += 3
