@@ -14,3 +14,11 @@ Later
 
 [] Need better way to integrate VGGT
 [] Other envs(Metaworld etc) need changes to work with observation dict!
+
+--
+
+- To setup VGGT:
+```
+cd 3D-Diffusion-Policy/third_party/vggt/
+pip install -e .
+```

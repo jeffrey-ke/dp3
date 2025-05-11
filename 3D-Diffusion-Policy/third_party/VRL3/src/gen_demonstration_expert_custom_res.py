@@ -208,14 +208,17 @@ def main():
 
         features = []
         with torch.no_grad():
-            num_images = img_arrays.shape[0]
-            for i in range(0, num_images, batch_size):
-                img_batch_np = img_arrays[i:i+batch_size]
-                img_batch_list = [to_tensor(img) for img in img_batch_np]
-                img_batch = torch.stack(img_batch_list, dim=0).to(device=device, dtype=vggt_dtype).unsqueeze(1)
-                tokens, token_start_idx = vggt.aggregator(img_batch)
-                batch_pred = tokens[args.feature_layer][:, :, token_start_idx:, :]
-                features.append(batch_pred.detach().cpu().numpy())
+            with torch.amp.autocast('cuda', dtype=vggt_dtype):
+                num_images = img_arrays.shape[0]
+                for i in range(0, num_images, batch_size):
+                    img_batch_np = img_arrays[i:i+batch_size]
+                    img_batch_list = [to_tensor(img) for img in img_batch_np]
+                    img_batch = torch.stack(img_batch_list, dim=0).to(device=device, dtype=vggt_dtype).unsqueeze(1)
+                    # img_batch = torch.stack(img_batch_list, dim=0).to(device=device).unsqueeze(1)
+                    print("Img batch dtype: ", img_batch.dtype, end="\r")
+                    tokens, token_start_idx = vggt.aggregator(img_batch)
+                    batch_pred = tokens[args.feature_layer - 1][:, :, token_start_idx:, :]
+                    features.append(batch_pred.detach().cpu().numpy())
                 
         features = np.concatenate(features, axis=0)
         features_chunk_size = (100, features.shape[1], features.shape[2], features.shape[3])

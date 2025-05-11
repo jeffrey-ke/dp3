@@ -22,8 +22,8 @@ class LinearNormalizer(DictOfTensorMixin):
         output_min=-1., # default for all fields
         range_eps=1e-4,
         fit_offset=True,
-        data_min: Union[Dict, torch.Tensor, np.ndarray, zarr.Array] = None,
-        data_max: Union[Dict, torch.Tensor, np.ndarray, zarr.Array] = None,
+        data_min: Union[Dict, torch.Tensor, np.ndarray, zarr.Array] = {},
+        data_max: Union[Dict, torch.Tensor, np.ndarray, zarr.Array] = {},
         ):
         if isinstance(data, dict):
             for key, value in data.items():

@@ -64,19 +64,20 @@ class AdroitDataset(BaseDataset):
             'action': self.replay_buffer['action'],
             'agent_pos': self.replay_buffer['state'][...,:],
             'point_cloud': self.replay_buffer['point_cloud'],
-            'img': self.replay_buffer['img'],
         }    
-        data_min = {
-            'img': 0,
-        }
-        data_max = {
-            'img': 1,
-        }
-
         normalizer = LinearNormalizer()
-        normalizer.fit(data=data, last_n_dims=1, mode=mode, data_min=data_min, data_max=data_max, **kwargs)
-
-        # NOTE: Setting identity normalizer for all other keys!
+        normalizer.fit(data=data, last_n_dims=1, mode=mode, **kwargs)
+        
+        # NOTE: Normalize img from 0-1
+        normalizer['img'] = SingleFieldLinearNormalizer.create_manual(
+            scale=torch.tensor([1/255.0]),
+            offset=torch.tensor([0.0]),
+            input_stats_dict={
+                'min': torch.tensor([0.0]),
+                'max': torch.tensor([255.0]),
+            }
+        )
+        # NOTE: Indentity normalizer for all features keys!
         for key in self.zarr_keys:
             if key.startswith('features_') and key not in data:
                 normalizer['features'] = SingleFieldLinearNormalizer.create_identity()
