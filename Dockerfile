@@ -43,34 +43,36 @@ RUN echo "source /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
 SHELL ["/opt/conda/bin/conda", "run", "--no-capture-output", "-n", "dp3", "/bin/bash", "-c"]
 
 # Set working directory
-WORKDIR ws
+WORKDIR /root/ws
 
 # Clone the repository
 RUN git clone https://github.com/jeffrey-ke/dp3.git
 
 # Install PyTorch with CUDA support (following the exact version in INSTALL.md)
-WORKDIR dp3/3D-Diffusion-Policy
+WORKDIR /root/ws/dp3/3D-Diffusion-Policy
 RUN pip install --no-cache-dir torch==2.0.1+cu118 \
                                 torchvision==0.15.2+cu118 \
                                 --extra-index-url https://download.pytorch.org/whl/cu118
 # install dp3
 RUN pip install -e 3D-Diffusion-Policy
 # install mujoco
-RUN wget https://github.com/deepmind/mujoco/releases/download/2.1.0/mujoco210-linux-x86_64.tar.gz \ 
-     -O ~/mujoco210.tar.gz --no-check-certificate
-RUN tar -xvzf ~/mujoco210.tar.gz
-ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${HOME}/.mujoco/mujoco210/bin \
+WORKDIR /root/.mujoco
+RUN wget https://github.com/deepmind/mujoco/releases/download/2.1.0/mujoco210-linux-x86_64.tar.gz -O mujoco210.tar.gz --no-check-certificate
+RUN tar -xvzf mujoco210.tar.gz
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/root/.mujoco/mujoco210/bin \
     LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/nvidia \
     LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64 \
     MUJOCO_GL=egl
 
-WORKDIR ../third_party
-RUN pip install -e mujoco-py-2.1.2.14
+WORKDIR /root/ws/dp3/3D-Diffusion-Policy/third_party
+RUN ["pip", "install", "-e", "mujoco-py-2.1.2.14"]
 # install sim env
 RUN pip install setuptools==59.5.0 Cython==0.29.35 patchelf==0.17.2.0
-RUN pip install -e dexart-release gym-0.21.0 Metaworld rrl-dependencies/mjenvs rrl-dependencies/mjrl
+RUN pip install -e gym-0.21.0 
+RUN pip install -e dexart-release
+RUN pip install -e Metaworld rrl-dependencies/mj_envs rrl-dependencies/mjrl 
 COPY vrl3_ckpts.zip VRL3/
-RUN unzip VRL3/vrl3_ckpts.zip -d VRL3 && mv vrl3_ckpts ckpts
+RUN unzip VRL3/vrl3_ckpts.zip -d VRL3 && mv VRL3/vrl3_ckpts VRL3/ckpts
 COPY dexart_assets.zip dexart-release/
 RUN unzip dexart-release/dexart_assets.zip -d dexart-release
 
