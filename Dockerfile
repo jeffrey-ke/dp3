@@ -46,6 +46,7 @@ SHELL ["/opt/conda/bin/conda", "run", "--no-capture-output", "-n", "dp3", "/bin/
 WORKDIR /root/ws
 
 # Clone the repository
+RUN ls -R /root/ws | head -20     # shows the repo layout during build
 RUN git clone https://github.com/jeffrey-ke/dp3.git
 
 # Install PyTorch with CUDA support (following the exact version in INSTALL.md)
@@ -55,6 +56,7 @@ RUN pip install --no-cache-dir torch==2.0.1+cu118 \
                                 --extra-index-url https://download.pytorch.org/whl/cu118
 # install dp3
 RUN pip install -e 3D-Diffusion-Policy
+RUN pip install -e vggt
 # install mujoco
 WORKDIR /root/.mujoco
 RUN wget https://github.com/deepmind/mujoco/releases/download/2.1.0/mujoco210-linux-x86_64.tar.gz -O mujoco210.tar.gz --no-check-certificate
