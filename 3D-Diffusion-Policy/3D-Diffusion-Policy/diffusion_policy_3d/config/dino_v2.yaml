@@ -63,6 +63,8 @@ policy:
   pointnet_type: "pointnet"
 
   encoder_type: "dino_v2"
+  encoder_cfg:
+    feature_layer: 23
 
   pointcloud_encoder_cfg:
     in_channels: 3
