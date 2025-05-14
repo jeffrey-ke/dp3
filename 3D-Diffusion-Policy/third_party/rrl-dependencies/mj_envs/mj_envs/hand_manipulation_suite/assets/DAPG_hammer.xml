@@ -43,6 +43,18 @@
         <!-- Camera for the VIL paper -->
         <camera name="vil_camera" pos="0 -1.2 1.2" quat="0.92388 0.382683 0 0" />
         <camera name="top" pos="0 0 1.1" euler="0 0 3.14" />
+        <camera name="right" pos="-1.1 0 0" quat="0.5 -0.5 -0.5  0.5" />
+        <camera name="left" pos="1.1 0 0" quat="0.5 -0.5 0.5 -0.5" />
+        <camera name="front" pos="0 -1.1 0" quat="0 0 -0.7071 0.7071" />
+        <camera name="back" pos="0 1.1 0" quat="0.7071 -0.7071 0 0" />
+
+        <!-- <camera name="identity" pos="0 -1.1 0" quat="1 0 0 0" />
+        <camera name="roll90" pos="0 -1.1 0" quat="0.7071068 0.7071068 0 0" />
+        <camera name="pitch90" pos="0 -1.1 0" quat="0.7071068 0 0.7071068 0" />
+        <camera name="yaw90" pos="0 -1.1 0" quat="0.7071068 0 0 0.7071068" />
+        <camera name="roll-90" pos="0 -1.1 0" quat="0.7071068 -0.7071068 0 0" />
+        <camera name="pitch-90" pos="0 -1.1 0" quat="0.7071068 0 -0.7071068 0" />
+        <camera name="yaw-90" pos="0 -1.1 0" quat="0.7071068 0 0 -0.7071068" /> -->
 
         <!-- <camera name="front" pos="0 -1.5 0.5" quat="0.9396926 0.3420201 0 0" />
         <camera name="front_right" pos="1.06 -1.06 0.5" quat="0.9396926 0.2418511 0.2418511 0" />

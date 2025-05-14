@@ -3,7 +3,7 @@ name: adroit_door
 task_name: door
 
 
-mage_shape: &image_shape [3, 168, 168]
+image_shape: &image_shape [3, 168, 168]
 shape_meta: &shape_meta
   # acceptable types: rgb, low_dim
   obs:
@@ -27,7 +27,8 @@ env_runner:
   n_action_steps: ${n_action_steps}
   fps: 10
   task_name: door
-  render_size: 84
+  render_size: 168
+  cam_list: ${policy.cam_list}
   use_point_crop: ${policy.use_point_crop}
 
 dataset:
@@ -39,3 +40,4 @@ dataset:
   seed: 42
   val_ratio: 0.02
   max_train_episodes: 90
+  zarr_keys: ${policy.expert_zarr_keys}

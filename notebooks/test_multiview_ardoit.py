@@ -1,6 +1,6 @@
 import os
 import numpy as np
-import matplotlib.pyplot as plt
+import cv2
 from diffusion_policy_3d.env.adroit.adroit import AdroitEnv
 import torch
 
@@ -12,10 +12,11 @@ def test_adroit_cameras():
     # Define all available cameras for hammer-v0
     # cam_list = ['fixed', 'vil_camera', 'top', 'front_low', 'rear', 'left_side', 'top_high']
     # cam_list = ['fixed', 'vil_camera', 'top', 'front_low', 'rear', 'left_side', 'top_high', 'cam0', 'cam1', 'cam2', 'cam3', 'cam4', 'cam5', 'cam6', 'cam7']
-    
     # cam_list = ['fixed', 'vil_camera', 'top', 'front', 'front_right', 'right', 'back_right', 'back', 'back_left', 'left', 'front_left']
-    cam_list = ['fixed', 'vil_camera', 'top', 'high_front', 'high_front_right', 'high_right', 'high_back_right', 'high_back', 'high_back_left', 'high_left', 'high_front_left']
+    # cam_list = ['fixed', 'vil_camera', 'top', 'high_front', 'high_front_right', 'high_right', 'high_back_right', 'high_back', 'high_back_left', 'high_left', 'high_front_left']
     # cam_list = ['low_front', 'low_right', 'low_back', 'low_left']
+    cam_list = ['top', 'right', 'left', 'front', 'back',]
+
     # Initialize environment with all cameras
     env = AdroitEnv(
         env_name='hammer-v0',
@@ -42,18 +43,8 @@ def test_adroit_cameras():
         if torch.is_tensor(images):
             img = img.cpu().numpy()
           
-        # import pdb; pdb.set_trace()
-        # Convert from (C, H, W) to (H, W, C) for matplotlib
-        
-        
-        
-        # Create figure and save
-        plt.figure(figsize=(10, 10))
-        plt.imshow(img)
-        plt.title(f'Camera: {cam_name}')
-        plt.axis('off')
-        plt.savefig(os.path.join(output_dir, f'{cam_name}.png'))
-        plt.close()
+        img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        cv2.imwrite(os.path.join(output_dir, f'{cam_name}.png'), img_bgr)
         
         print(f"Saved image for camera: {cam_name}")
         i += 3

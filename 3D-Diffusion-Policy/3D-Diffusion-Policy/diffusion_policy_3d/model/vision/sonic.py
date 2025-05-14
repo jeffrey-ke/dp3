@@ -4,7 +4,6 @@ import sys
 from typing import Optional, Dict, Tuple, Union, List, Type
 from termcolor import cprint
 
-sys.path.append('/home/san/dp3/vggt')
 from vggt.models.vggt import VGGT
 
 from diffusion_policy_3d.model.vision.pointnet_extractor import PointNetEncoderXYZ, create_mlp, DP3Encoder
@@ -194,6 +193,7 @@ class Bottleneck(nn.Module):
     def __init__(self, n_patches, dp3_encoder_dim, n_views=1, patch_dim=2048, **bottleneck_args):
         super().__init__()
         fusion_type = bottleneck_args.get("fusion_type", "no_pool")
+        
         S = n_views
         # self.token_downscaler, (_, n_patches_conv, patch_dim_conv) = conv_downscaler(n_views, n_patches, patch_dim)
         self.token_downscaler, (_, n_patches_conv, patch_dim_conv) = patch_dim_downscaler(n_views, n_patches, patch_dim)
@@ -236,9 +236,10 @@ class SonicEncoder(nn.Module):
                  img_crop_shape=None,
                  out_channel=256,
                  state_mlp_size=(64, 64), state_mlp_activation_fn=nn.ReLU,
-                 **bottleneck_args,
+                 **encoder_cfg,
                  ):
         super().__init__()
+        self.feature_layer = encoder_cfg.get("feature_layer", 6)
         self.imagination_key = 'imagin_robot'
         self.state_key = 'agent_pos'
         self.rgb_image_key = 'image'
@@ -262,7 +263,7 @@ class SonicEncoder(nn.Module):
         self.vggt_batchsize = 16 # TODO: needs to go into config!
         
         n_patches = self.image_shape[-1]//self.VGGT_PATCH_SIZE * self.image_shape[-2]//self.VGGT_PATCH_SIZE
-        self.bottleneck = Bottleneck(n_patches, out_channel, **bottleneck_args)
+        self.bottleneck = Bottleneck(n_patches, out_channel, **encoder_cfg)
         print(self.bottleneck)
         # defining agent state mlp
         if len(state_mlp_size) == 0:
@@ -289,21 +290,43 @@ class SonicEncoder(nn.Module):
             images = observations["img"]
         
         images = images.unsqueeze(1) # VGGT expects B, N_views, C, H, W
-        # save_test_images(observations)
-        # print(images.shape)
-        # import pdb; pdb.set_trace()
-        with torch.no_grad():
-            self.vggt.to(images.device)
-            with torch.amp.autocast('cuda', dtype=self.vggt_dtype):
-                features = []
-                for i in range(0, images.shape[0], self.vggt_batchsize):
-                    minibatch = images[i:i+self.vggt_batchsize]
-                    # NOTE: vggt returns features from all 24 attention layers, only using last layers features here!
-                    tokens, token_start_idx = self.vggt.aggregator(minibatch) 
-                    features.append(tokens[-1][:, :, token_start_idx:, :])
-            self.vggt.to('cpu')
+        if 'features' in observations.keys():
+            features = observations['features']
 
-        features = torch.cat(features, dim=0) 
+            #  debug if cached features are correct, save expert in torch.float32
+            # with torch.no_grad():
+            #     features = []
+            #     for i in range(0, images.shape[0], self.vggt_batchsize):
+            #         minibatch = images[i:i+self.vggt_batchsize].to(self.vggt_dtype)
+            #         tokens, token_start_idx = self.vggt.aggregator(minibatch, self.feature_layer)
+            #         features.append(tokens[-1][:, :, token_start_idx:, :])
+            # features = torch.cat(features, dim=0) 
+            # features = features.to(saved_features.device)
+            # # Calculate number of close indices between features and saved_features
+            # close_threshold = 1e-5
+            # num_close = torch.sum(torch.abs(features - saved_features) < close_threshold).item()
+            # total_elements = features.numel()
+            # print(f"Number of close elements: {num_close} out of {total_elements} ({100.0 * num_close / total_elements:.2f}%)")
+        else:
+            with torch.no_grad():
+                # self.vggt.to(images.device)
+                # import pdb; pdb.set_trace()
+                with torch.amp.autocast('cuda', dtype=self.vggt_dtype):
+
+                    tokens, token_start_idx = self.vggt.aggregator(images, self.feature_layer)
+                    features = tokens[-1][:, :, token_start_idx:, :]    
+                    
+                    # NOTE: batching logic for vggt
+                    # features = []
+                    # for i in range(0, images.shape[0], self.vggt_batchsize):
+                    #     minibatch = images[i:i+self.vggt_batchsize]
+                    #     # NOTE: vggt returns features from all 24 attention layers, only using last layers features here!
+                    #     tokens, token_start_idx = self.vggt.aggregator(minibatch, self.feature_layer)
+                    #     features.append(tokens[-1][:, :, token_start_idx:, :])
+                    # features = torch.cat(features, dim=0) 
+
+                # self.vggt.to('cpu')
+
         bottlenecked_features = self.bottleneck(features)
         cated_features = torch.cat([bottlenecked_features, robot_state_features], dim=-1)
         return cated_features

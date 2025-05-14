@@ -10,6 +10,7 @@ print(f'Loading dp3 from path {dp3_path}')
 if not os.path.exists(dp3_path):
     raise Exception("dp3 path does not exist: " + dp3_path)
 sys.path.append(dp3_path)
+
 import math
 import torch
 import torch.nn as nn
@@ -29,6 +30,7 @@ from diffusion_policy_3d.common.pytorch_util import dict_apply
 from diffusion_policy_3d.common.model_util import print_params
 from diffusion_policy_3d.model.vision.pointnet_extractor import DP3Encoder
 from diffusion_policy_3d.model.vision.sonic import SonicEncoder
+from diffusion_policy_3d.model.vision.dino_v2 import DinoV2Encoder
 from diffusion_policy_3d.vis_utils.img_utils import save_test_images
 
 class DP3(BasePolicy):
@@ -54,6 +56,7 @@ class DP3(BasePolicy):
             pointnet_type="pointnet",
             pointcloud_encoder_cfg=None,
             encoder_type="dp3",
+            encoder_cfg=None,
             # parameters passed to step
             **kwargs):
         super().__init__()
@@ -100,8 +103,12 @@ class DP3(BasePolicy):
             obs_encoder = SonicEncoder(observation_space=obs_dict,
                                    img_crop_shape=crop_shape,
                                    out_channel=encoder_output_dim,
-                                   fusion_type="patch_pool_max")
-        
+                                   **encoder_cfg,
+                                )
+        elif encoder_type == "dino_v2":
+            obs_encoder = DinoV2Encoder(observation_space=obs_dict,
+                                  out_channel=encoder_output_dim,
+                                )
         
         # # create diffusion model
         obs_feature_dim = obs_encoder.output_shape()

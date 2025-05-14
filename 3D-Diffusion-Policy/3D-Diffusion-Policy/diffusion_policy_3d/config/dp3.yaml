@@ -25,6 +25,8 @@ policy:
   use_down_condition: true
   use_mid_condition: true
   use_up_condition: true
+
+  expert_zarr_keys: ['state', 'action', 'point_cloud', 'img']
   
   diffusion_step_embed_dim: 128
   down_dims:
@@ -59,6 +61,7 @@ policy:
 
   use_pc_color: false
   pointnet_type: "pointnet"
+
   encoder_type: "dp3"
 
   pointcloud_encoder_cfg:
@@ -120,7 +123,7 @@ logging:
   group: ${exp_name}
   id: null
   mode: online
-  name: ${training.seed}
+  name: ${exp_name}-${training.seed}
   project: dp3
   resume: False
   tags:
