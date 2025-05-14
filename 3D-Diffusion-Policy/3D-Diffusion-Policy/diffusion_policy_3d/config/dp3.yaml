@@ -123,7 +123,7 @@ logging:
   group: ${exp_name}
   id: null
   mode: online
-  name: ${training.seed}
+  name: ${exp_name}-${training.seed}
   project: dp3
   resume: False
   tags:
