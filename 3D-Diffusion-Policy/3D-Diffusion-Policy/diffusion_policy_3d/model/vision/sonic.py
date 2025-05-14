@@ -15,6 +15,8 @@ def load_vggt(device="cuda"):
     v.load_state_dict(torch.hub.load_state_dict_from_url(url))
     v.to(device)
     v.eval()
+    for param in v.parameters():
+        param.requires_grad = False
     vggt_dtype = torch.bfloat16 if torch.cuda.get_device_capability()[0] >= 8 else torch.float16
     return v, vggt_dtype
 
@@ -260,7 +262,7 @@ class SonicEncoder(nn.Module):
 
         # defining vggt extractor + bottle necks
         self.vggt, self.vggt_dtype = load_vggt()
-        self.vggt_batchsize = 16 # TODO: needs to go into config!
+        self.vggt_batchsize = 16 # TODO: not needed, training features cached!
         
         n_patches = self.image_shape[-1]//self.VGGT_PATCH_SIZE * self.image_shape[-2]//self.VGGT_PATCH_SIZE
         self.bottleneck = Bottleneck(n_patches, out_channel, **encoder_cfg)

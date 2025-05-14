@@ -67,8 +67,9 @@ policy:
   encoder_type: "sonic"
   encoder_cfg:
     feature_layer: 6
-    fusion_type: "patch_pool_max"
-    
+    # fusion_type: "patch_pool_max"
+    fusion_type: "no_pool"
+
   pointcloud_encoder_cfg:
     in_channels: 3
     out_channels: ${policy.encoder_output_dim}
@@ -128,7 +129,7 @@ logging:
   group: ${exp_name}
   id: null
   mode: online
-  name: ${exp_name}-${training.seed}
+  name: ${exp_name}-${policy.encoder_cfg.fusion_type}-seed${training.seed}
   project: dp3
   resume: False
   tags:

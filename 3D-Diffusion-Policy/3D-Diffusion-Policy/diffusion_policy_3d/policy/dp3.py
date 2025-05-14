@@ -27,7 +27,7 @@ from diffusion_policy_3d.policy.base_policy import BasePolicy
 from diffusion_policy_3d.model.diffusion.conditional_unet1d import ConditionalUnet1D
 from diffusion_policy_3d.model.diffusion.mask_generator import LowdimMaskGenerator
 from diffusion_policy_3d.common.pytorch_util import dict_apply
-from diffusion_policy_3d.common.model_util import print_params
+from diffusion_policy_3d.common.model_util import print_params, print_params_v2
 from diffusion_policy_3d.model.vision.pointnet_extractor import DP3Encoder
 from diffusion_policy_3d.model.vision.sonic import SonicEncoder
 from diffusion_policy_3d.model.vision.dino_v2 import DinoV2Encoder
@@ -172,7 +172,8 @@ class DP3(BasePolicy):
         self.num_inference_steps = num_inference_steps
 
 
-        print_params(self)
+        # print_params(self)
+        print_params_v2(self)
         
     # ========= inference  ============
     def conditional_sample(self, 
