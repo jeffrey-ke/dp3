@@ -67,9 +67,8 @@ policy:
   encoder_type: "sonic"
   encoder_cfg:
     feature_layer: 6
-    # fusion_type: "patch_pool_max"
-    fusion_type: "no_pool"
-
+    fusion_type: "attention_bottleneck"
+    
   pointcloud_encoder_cfg:
     in_channels: 3
     out_channels: ${policy.encoder_output_dim}

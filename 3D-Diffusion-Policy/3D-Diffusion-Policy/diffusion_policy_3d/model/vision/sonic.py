@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+import torch.nn.functional as F
 import sys 
 from typing import Optional, Dict, Tuple, Union, List, Type
 from termcolor import cprint
@@ -195,7 +196,13 @@ class Bottleneck(nn.Module):
     def __init__(self, n_patches, dp3_encoder_dim, n_views=1, patch_dim=2048, **bottleneck_args):
         super().__init__()
         fusion_type = bottleneck_args.get("fusion_type", "no_pool")
-        
+        self.fusion_type = fusion_type
+
+        if fusion_type == "attention_bottleneck":
+            cprint(f"[{self.__class__.__name__}] Using attention bottleneck", "red")
+            self.attn_bottleneck = AttentionBottleneck(n_patches, dp3_encoder_dim, n_views, patch_dim)
+            return
+
         S = n_views
         # self.token_downscaler, (_, n_patches_conv, patch_dim_conv) = conv_downscaler(n_views, n_patches, patch_dim)
         self.token_downscaler, (_, n_patches_conv, patch_dim_conv) = patch_dim_downscaler(n_views, n_patches, patch_dim)
@@ -210,14 +217,17 @@ class Bottleneck(nn.Module):
             final_reshaped_dim = n_patches_conv * patch_dim_conv
         else:
             raise ValueError(f"Invalid fusion type: {fusion_type}")
-        self.fusion_type = fusion_type
         self.proj = nn.Linear(final_reshaped_dim, dp3_encoder_dim)
         
     
     def forward(self, features):
         B, *_ = features.shape
+
+        if self.fusion_type == "attention_bottleneck":
+            features = self.attn_bottleneck(features)
+            return features
+
         features = self.token_downscaler(features)
-        
         if self.fusion_type == "patch_pool_max": 
             features = torch.max(features, dim=2).values  # Shape should be (B, S, patch_dim // 8)
         elif self.fusion_type == "patch_pool_mean":
