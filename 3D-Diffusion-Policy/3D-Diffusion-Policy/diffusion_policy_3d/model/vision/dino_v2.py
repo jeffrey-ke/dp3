@@ -1,10 +1,14 @@
 import torch
 from torch import nn
 from diffusion_policy_3d.model.vision.pointnet_extractor import create_mlp
+from termcolor import cprint
 
 class DinoV2Encoder(nn.Module):
-    def __init__(self, observation_space, out_channel):
+    def __init__(self, observation_space, out_channel, dino_v2_variant='dinov2_vitl14'):
         super().__init__()
+
+        cprint(f'Using dino v2 variant: {dino_v2_variant}', 'yellow')
+
         ## state information
         state_mlp_output_dim = 64                          
         self.final_dim = out_channel + state_mlp_output_dim
@@ -12,7 +16,7 @@ class DinoV2Encoder(nn.Module):
         self.robot_state_dim = observation_space['agent_pos']
         self.image_shape = observation_space['image']
         ## layers
-        self.dino = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14')
+        self.dino = torch.hub.load('facebookresearch/dinov2', dino_v2_variant)
         self.dino_proj = nn.Linear(self.dino.embed_dim, out_channel)
         self.state_mlp = nn.Sequential(*create_mlp(self.robot_state_dim[0],
                                                    state_mlp_output_dim,
