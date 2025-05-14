@@ -108,6 +108,7 @@ class DP3(BasePolicy):
         elif encoder_type == "dino_v2":
             obs_encoder = DinoV2Encoder(observation_space=obs_dict,
                                   out_channel=encoder_output_dim,
+                                  **encoder_cfg,
                                 )
         
         # # create diffusion model
