@@ -147,6 +147,7 @@ def main(args):
     zarr_meta = zarr_root.create_group('meta')
     # save img, state, action arrays into data, and episode ends arrays into meta
     img_arrays = np.stack(img_arrays, axis=0)
+    pdb()
     img_arrays_high_def = np.stack(img_arrays_high_def, axis=0)
     if img_arrays.shape[1] == 3: # make channel last
         img_arrays = np.transpose(img_arrays, (0,2,3,1))
