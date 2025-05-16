@@ -2,13 +2,13 @@ name: adroit_pen
 
 task_name: pen
 
-image_shape: &image_shape [3, 84, 84]
+image_shape: &image_shape [3, 168, 168]
 shape_meta: &shape_meta
   # acceptable types: rgb, low_dim
   obs:
-    # image:
-    #     shape: *image_shape
-    #     type: rgb
+    image:
+        shape: *image_shape
+        type: rgb
     point_cloud:
       shape: [512, 3]
       type: point_cloud
@@ -26,9 +26,10 @@ env_runner:
   n_action_steps: ${n_action_steps}
   fps: 10
   task_name: pen
-  render_size: 84
+  render_size: 168
   use_point_crop: ${policy.use_point_crop}
-
+  cam_list: ['vil_camera'] # default for pen!
+ 
 dataset:
   _target_: diffusion_policy_3d.dataset.adroit_dataset.AdroitDataset
   zarr_path: data/adroit_pen_expert.zarr
@@ -38,3 +39,6 @@ dataset:
   seed: 42
   val_ratio: 0.02
   max_train_episodes: 90
+  zarr_keys: ${policy.expert_zarr_keys}
+  feature_layer: ${policy.encoder_feature_layer}
+

@@ -113,7 +113,8 @@ def main():
                 input_obs_visual = time_step.observation
                 input_obs_sensor = time_step.observation_sensor
                 # cam: top, vil_camera, fixed
-                img_custom_res = render_camera(env.env._env.sim, camera_name="top", im_size=168).transpose(2,0,1).copy()
+                camera_name = env.env._env.cameras[0]
+                img_custom_res = render_camera(env.env._env.sim, camera_name=camera_name, im_size=168).transpose(2,0,1).copy()
                     
                 action = expert_agent.act(obs=input_obs_visual, step=0,
                                         eval_mode=True, 
