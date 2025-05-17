@@ -15,6 +15,7 @@ from PIL import Image
 import zarr
 from copy import deepcopy
 import numpy as np
+import yaml
 
 from diffusion_policy_3d.gym_util.mjpc_wrapper import MujocoPointcloudWrapperAdroit
 from diffusion_policy_3d.model.vision.sonic import load_vggt
@@ -23,6 +24,7 @@ from torchvision.transforms import ToTensor
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--env_name', type=str, default='door', help='environment to run')
+    parser.add_argument('--policy_name', type=str, default=None, help='policy to run')
     parser.add_argument('--num_episodes', type=int, default=100, help='number of episodes to run')
     parser.add_argument('--root_dir', type=str, default='data', help='directory to save data')
     parser.add_argument('--expert_ckpt_path', type=str, default=None, help='path to expert ckpt')
@@ -48,8 +50,8 @@ def main():
     # load env
     action_repeat = 2
     frame_stack = 1
-    def create_env():
-        env = AdroitEnv(env_name=args.env_name+'-v0', test_image=False, num_repeats=action_repeat,
+    def create_env(cam_list=None):
+        env = AdroitEnv(env_name=args.env_name+'-v0', cam_list=cam_list, test_image=False, num_repeats=action_repeat,
                         num_frames=frame_stack, env_feature_type='pixels',
                                             device='cuda', reward_rescale=True)
         env = MujocoPointcloudWrapperAdroit(env=env, env_name='adroit_'+args.env_name, use_point_crop=args.use_point_crop)
@@ -76,6 +78,8 @@ def main():
     expert_agent.to('cuda')
     
     cprint('Loaded expert ckpt from {}'.format(args.expert_ckpt_path), 'green')
+    if args.policy_name:
+        cprint(f'Policy name is: {args.policy_name}', 'green')
 
     total_count = 0
     img_arrays = []
@@ -90,8 +94,14 @@ def main():
     # loop over episodes
     minimal_episode_length = 100
     episode_idx = 0
+    cam_list = None
+    if args.policy_name:
+        policy_conf_path = f'../../../3D-Diffusion-Policy/diffusion_policy_3d/config/{args.policy_name}.yaml'
+        with open(policy_conf_path, "r") as f:
+            policy_conf = yaml.safe_load(f)
+        cam_list = policy_conf['policy']['cam_list']
     while episode_idx < num_episodes:
-        env = create_env()
+        env = create_env(cam_list)
         time_step = env.reset()
         input_obs_visual = time_step.observation # (3n,84,84), unit8
         input_obs_sensor = time_step.observation_sensor # float32, door(24,)q        
@@ -112,19 +122,21 @@ def main():
             with torch.no_grad(), utils.eval_mode(expert_agent):
                 input_obs_visual = time_step.observation
                 input_obs_sensor = time_step.observation_sensor
-                # cam: top, vil_camera, fixed
-                camera_name = env.env._env.cameras[0]
-                img_custom_res = render_camera(env.env._env.sim, camera_name=camera_name, im_size=168).transpose(2,0,1).copy()
-                    
+
+                # IMPT: Always ensure that the first camera is the camera used by the expert
+                if args.not_use_multi_view:
+                    input_obs_visual = input_obs_visual[:3] # (3,84,84)
+
+                img_custom_res = []
+                for cam_name in cam_list:
+                    cur_img = render_camera(env.env._env.sim, camera_name=cam_name, im_size=168).transpose(2,0,1).copy()
+                    img_custom_res.append(cur_img)
+                img_custom_res =  np.concatenate(img_custom_res, axis=0)
+
                 action = expert_agent.act(obs=input_obs_visual, step=0,
                                         eval_mode=True, 
                                         obs_sensor=input_obs_sensor) # (28,) float32
-                
-                if args.not_use_multi_view:
-                    input_obs_visual = input_obs_visual[:3] # (3,84,84)
-                
 
-                        
                 # save data
                 total_count_sub += 1
                 img_arrays_sub.append(img_custom_res)
@@ -166,10 +178,8 @@ def main():
     # save img, state, action arrays into data, and episode ends arrays into meta
     img_arrays = np.stack(img_arrays, axis=0)
     img_arrays_84 = np.stack(img_arrays_84, axis=0)
-    if img_arrays.shape[1] == 3: # make channel last
-        img_arrays = np.transpose(img_arrays, (0,2,3,1))
-    if img_arrays_84.shape[1] == 3: # make channel last
-        img_arrays_84 = np.transpose(img_arrays_84, (0,2,3,1))
+    img_arrays = np.transpose(img_arrays, (0,2,3,1)) # make channel last
+    img_arrays_84 = np.transpose(img_arrays_84, (0,2,3,1)) # make channel last
     state_arrays = np.stack(state_arrays, axis=0)
     point_cloud_arrays = np.stack(point_cloud_arrays, axis=0)
     depth_arrays = np.stack(depth_arrays, axis=0)
@@ -205,22 +215,75 @@ def main():
         device = 'cuda'
         batch_size = 32
         vggt, vggt_dtype = load_vggt(device=device)
-        to_tensor = ToTensor()
+
+        def test_input(img_batch):
+            import cv2
+            for i in range(img_batch.shape[1]):
+                img = img_batch[0, i]
+                img_np = img.detach().cpu().numpy()
+
+                img_np = (img_np * 255).clip(0, 255).astype(np.uint8)
+                img_np = np.transpose(img_np, (1, 2, 0))
+                img_np = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
+
+                cv2.imwrite(f"image_{i}.png", img_np)
+
+        def test_output(img_batch, vggt):
+            import open3d as o3d
+            tokens, token_start_idx = vggt.aggregator(img_batch)
+            point_map, point_conf = vggt.point_head(tokens, img_batch, token_start_idx)
+
+            # Process only batch_idx = 0
+            batch_idx = 0
+
+            # Get point cloud and color data for batch_idx
+            points = point_map[batch_idx]     # [3, 168, 168, 3]
+            colors = img_batch[batch_idx]     # [3, 3, 168, 168]
+
+            # Reshape
+            points = points.view(-1, 3).cpu().numpy()  # [3*168*168, 3]
+            colors = colors.to(torch.float32).permute(0, 2, 3, 1).contiguous().view(-1, 3).cpu().numpy()  # [3*168*168, 3]
+
+            # Normalize RGB if necessary
+            if colors.max() > 1.0:
+                colors = colors / 255.0
+
+            # Filter invalid points
+            valid_mask = np.isfinite(points).all(axis=1) & (np.linalg.norm(points, axis=1) > 1e-5)
+            points = points[valid_mask]
+            colors = colors[valid_mask]
+
+            # Create Open3D point cloud
+            pcd = o3d.geometry.PointCloud()
+            pcd.points = o3d.utility.Vector3dVector(points)
+            pcd.colors = o3d.utility.Vector3dVector(colors)
+
+            # Save to PLY
+            o3d.io.write_point_cloud("colored_pointcloud.ply", pcd)
+            exit()
+
 
         features = []
+        import time
+        t0 = time.time()
         with torch.no_grad():
             with torch.amp.autocast('cuda', dtype=vggt_dtype):
                 num_images = img_arrays.shape[0]
                 for i in range(0, num_images, batch_size):
                     img_batch_np = img_arrays[i:i+batch_size]
-                    img_batch_list = [to_tensor(img) for img in img_batch_np]
-                    img_batch = torch.stack(img_batch_list, dim=0).to(device=device, dtype=vggt_dtype).unsqueeze(1)
-                    # img_batch = torch.stack(img_batch_list, dim=0).to(device=device).unsqueeze(1)
-                    print("Img batch dtype: ", img_batch.dtype, end="\r")
-                    tokens, token_start_idx = vggt.aggregator(img_batch)
-                    batch_pred = tokens[args.feature_layer - 1][:, :, token_start_idx:, :]
+                    img_batch = torch.from_numpy(img_batch_np).permute(0, 3, 1, 2).float() / 255.0
+                    B, C, H, W = img_batch.shape
+                    n_imgs = C // 3
+                    img_batch = img_batch.view(B, n_imgs, 3, H, W)
+                    # test_input(img_batch)
+                    img_batch = img_batch.to(dtype=vggt_dtype, device=device)
+                    # test_output(img_batch, vggt)
+                    # print("Img batch dtype: ", img_batch.dtype, end="\r")
+                    tokens, token_start_idx = vggt.aggregator(img_batch, args.feature_layer)
+                    batch_pred = tokens[-1][:, :, token_start_idx:, :]
                     features.append(batch_pred.detach().cpu().numpy())
-                
+        
+        print(f'Time taken to extract features: {time.time() - t0}')
         features = np.concatenate(features, axis=0)
         features_chunk_size = (100, features.shape[1], features.shape[2], features.shape[3])
         zarr_data.create_dataset('features_{}'.format(args.feature_layer), data=features, chunks=features_chunk_size, dtype='float32', overwrite=True, compressor=compressor)
