@@ -19,8 +19,8 @@ obs_as_global_cond: True
 
 policy:
   _target_: diffusion_policy_3d.policy.dp3.DP3
-  # cam_list: ['top', 'fixed', 'high_back_right', 'high_back', 'high_back_left', 'high_left']
-  cam_list: ['top']
+  cam_list: ['top', 'right', 'front']
+  # cam_list: ['top']
   use_point_crop: true
   condition_type: film
   use_down_condition: true
@@ -67,7 +67,7 @@ policy:
   encoder_type: "sonic"
   encoder_cfg:
     feature_layer: 6
-    fusion_type: "attention_bottleneck"
+    fusion_type: "no_pool"
     
   pointcloud_encoder_cfg:
     in_channels: 3
@@ -86,14 +86,14 @@ ema:
   max_value: 0.9999
 
 dataloader:
-  batch_size: 128
+  batch_size: 32
   num_workers: 8
   shuffle: True
   pin_memory: False
   persistent_workers: False
 
 val_dataloader:
-  batch_size: 128
+  batch_size: 32
   num_workers: 8
   shuffle: False
   pin_memory: False

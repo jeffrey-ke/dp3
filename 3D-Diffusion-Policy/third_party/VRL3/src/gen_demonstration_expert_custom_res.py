@@ -273,8 +273,8 @@ def main():
                     img_batch_np = img_arrays[i:i+batch_size]
                     img_batch = torch.from_numpy(img_batch_np).permute(0, 3, 1, 2).float() / 255.0
                     B, C, H, W = img_batch.shape
-                    n_imgs = C // 3
-                    img_batch = img_batch.view(B, n_imgs, 3, H, W)
+                    n_views = C // 3
+                    img_batch = img_batch.view(B, n_views, 3, H, W)
                     # test_input(img_batch)
                     img_batch = img_batch.to(dtype=vggt_dtype, device=device)
                     # test_output(img_batch, vggt)

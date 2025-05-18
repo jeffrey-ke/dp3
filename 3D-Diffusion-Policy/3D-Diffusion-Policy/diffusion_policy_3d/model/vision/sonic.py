@@ -260,6 +260,7 @@ class SonicEncoder(nn.Module):
         self.use_imagined_robot = self.imagination_key in observation_space.keys()
         self.state_shape = observation_space[self.state_key]
         self.image_shape = observation_space['image']
+        self.n_views = encoder_cfg['n_views']
         if self.use_imagined_robot:
             self.imagination_shape = observation_space[self.imagination_key]
         else:
@@ -295,13 +296,18 @@ class SonicEncoder(nn.Module):
         robot_state_features = self.state_mlp(robot_state)
         # import pdb; pdb.set_trace()
 
-        if observations["img"].shape[1] != 3:
+        if observations["img"].shape[1] != self.n_views * 3:
             images = observations["img"].permute(0, 3, 1, 2) # now, in shape B,C,H,W
         else:
             #NOTE: policy eval run retuns B, H, W, C as default
             images = observations["img"]
-        
-        images = images.unsqueeze(1) # VGGT expects B, N_views, C, H, W
+
+        # print(f'images.shape: {images.shape}')
+
+        B, C, H, W = images.shape
+        n_views = C // 3
+        images = images.view(B, n_views, 3, H, W)
+
         if 'features' in observations.keys():
             features = observations['features']
 

@@ -51,6 +51,13 @@ class TrainDP3Workspace:
         random.seed(seed)
 
         # configure model
+
+        # TODO: See if there is a cleaner way to do this
+        if 'encoder_cfg' in cfg.policy:
+            OmegaConf.set_struct(cfg.policy.encoder_cfg, False)
+            cfg.policy.encoder_cfg.n_views = len(cfg.policy.cam_list)
+            OmegaConf.set_struct(cfg.policy.encoder_cfg, True)
+
         self.model: DP3 = hydra.utils.instantiate(cfg.policy)
 
         self.ema_model: DP3 = None
