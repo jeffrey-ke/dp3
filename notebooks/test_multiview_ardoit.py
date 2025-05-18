@@ -15,7 +15,7 @@ def test_adroit_cameras():
     # cam_list = ['fixed', 'vil_camera', 'top', 'front', 'front_right', 'right', 'back_right', 'back', 'back_left', 'left', 'front_left']
     # cam_list = ['fixed', 'vil_camera', 'top', 'high_front', 'high_front_right', 'high_right', 'high_back_right', 'high_back', 'high_back_left', 'high_left', 'high_front_left']
     # cam_list = ['low_front', 'low_right', 'low_back', 'low_left']
-    cam_list = ['top', 'right', 'left', 'front', 'back',]
+    cam_list = ['top', 'right', 'front', 'top-right', 'top-front', 'left', 'back']
 
     # Initialize environment with all cameras
     env = AdroitEnv(

@@ -47,6 +47,8 @@
         <camera name="left" pos="1.1 0 0" quat="0.5 -0.5 0.5 -0.5" />
         <camera name="front" pos="0 -1.1 0" quat="0 0 -0.7071 0.7071" />
         <camera name="back" pos="0 1.1 0" quat="0.7071 -0.7071 0 0" />
+        <camera name="top-right" pos="-0.7782 0 0.7782" quat="0.6533 -0.2706 -0.2706 0.6533"/>
+        <camera name="top-front" pos="0 -0.7782 0.7782" quat="0 0 -0.3827 0.9239" />
 
         <!-- <camera name="identity" pos="0 -1.1 0" quat="1 0 0 0" />
         <camera name="roll90" pos="0 -1.1 0" quat="0.7071068 0.7071068 0 0" />
