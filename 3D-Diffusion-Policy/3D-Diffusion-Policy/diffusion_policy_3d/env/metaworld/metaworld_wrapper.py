@@ -21,7 +21,7 @@ TASK_BOUDNS = {
 
 class MetaWorldEnv(gym.Env):
     metadata = {"render.modes": ["rgb_array"], "video.frames_per_second": 10}
-
+    HIGH_RES_DIM = 168
     def __init__(self, task_name, device="cuda:0", 
                  use_point_crop=True,
                  num_points=1024,
@@ -163,7 +163,7 @@ class MetaWorldEnv(gym.Env):
 
     def get_visual_obs(self):
         obs_pixels = self.get_rgb()
-        obs_pixels_high_def = self.render_high_res(resolution=168)
+        obs_pixels_high_def = self.render_high_res(resolution=self.HIGH_RES_DIM)
         robot_state = self.get_robot_state()
         point_cloud, depth = self.get_point_cloud()
         
@@ -187,7 +187,7 @@ class MetaWorldEnv(gym.Env):
 
 
         obs_pixels = self.get_rgb()
-        obs_pixels_high_def = self.render_high_res(resolution=512)
+        obs_pixels_high_def = self.render_high_res(resolution=self.HIGH_RES_DIM)
         # pdb()
         # images_dir = Path("images")
         # images_dir.mkdir(exist_ok=True, parents=True)
