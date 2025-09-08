@@ -144,7 +144,6 @@ These are preliminary findings that warrant further investigation across more ta
 - **3D Diffusion Policy (DP3)**: [Paper](https://arxiv.org/abs/2403.03954) | [Original Repo](https://github.com/YanjieZe/3D-Diffusion-Policy)
 - **VGGT**: [Paper](https://arxiv.org/abs/2503.11651) | [Project Page](https://vgg-t.github.io/)
 - **R3M**: [Paper](https://arxiv.org/abs/2203.12601) - Seminal work on pretrained visual representations for robotics
-- **Final Report**: See `/Downloads/throwaway/Final report (1).pdf` for detailed experimental analysis
 
 ## 🤝 Citation
 
